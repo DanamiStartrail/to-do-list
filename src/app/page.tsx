@@ -115,17 +115,21 @@ export default function TodoPage() {
     </div>
   )
 
-  return (
+    return (
     <main className="min-h-screen bg-[#0a0f14] py-6 md:py-16 px-4 md:px-6 relative overflow-x-hidden">
       <BinaryBackground />
       
+      {/* Glow Ambient untuk Desktop */}
+      <div className="fixed top-[-10%] left-[-10%] w-[700px] h-[700px] bg-green-500/10 blur-[180px] rounded-full pointer-events-none hidden md:block"></div>
+      <div className="fixed bottom-[-10%] right-[-10%] w-[700px] h-[700px] bg-emerald-500/10 blur-[180px] rounded-full pointer-events-none hidden md:block"></div>
+
       <div className="relative z-10 w-full max-w-full md:max-w-[700px] mx-auto space-y-5 md:space-y-10">
         
         {/* Header Section */}
-        <div className="bg-slate-900/80 backdrop-blur-3xl p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-white/10 shadow-2xl flex justify-between items-center transition-all">
-          <div className="flex items-center gap-4">
-            <div className="p-2 bg-green-500/10 rounded-xl border border-green-500/20">
-               <span className="text-3xl md:text-4xl filter drop-shadow-[0_0_12px_rgba(0,255,65,0.8)]">🦅</span>
+        <div className="bg-slate-900/80 backdrop-blur-3xl p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex justify-between items-center transition-all">
+          <div className="flex items-center gap-4 md:gap-6">
+            <div className="p-3 bg-green-500/20 rounded-2xl border border-green-500/30">
+              <span className="text-3xl md:text-4xl filter drop-shadow-[0_0_12px_rgba(0,255,65,0.8)]">🦅</span>
             </div>
             <div>
               <h1 className="text-xl md:text-3xl font-black text-white tracking-tighter italic uppercase">RAVEN<span className="text-green-400">LIST</span></h1>
@@ -133,8 +137,8 @@ export default function TodoPage() {
             </div>
           </div>
           <button 
-            onClick={handleLogout} 
-            className="text-[9px] md:text-[11px] font-black uppercase tracking-widest text-red-400 border border-red-500/40 py-2 md:py-4 px-5 md:px-8 rounded-xl md:rounded-2xl hover:bg-red-500 hover:text-black transition-all"
+            onClick={handleLogout}
+            className="text-[9px] md:text-[11px] font-black uppercase tracking-widest text-red-400 border border-red-500/40 py-2 md:py-4 px-5 md:px-8 rounded-xl md:rounded-2xl hover:bg-red-500 hover:text-black transition-all shadow-lg"
           >
             DISCONNECT
           </button>
@@ -151,9 +155,15 @@ export default function TodoPage() {
               className="w-full pl-12 pr-20 py-4 md:py-6 bg-white/5 border border-white/10 rounded-2xl md:rounded-[2rem] focus:border-green-500/50 outline-none transition-all text-white placeholder:text-slate-500 font-mono text-sm md:text-lg"
               placeholder="Execute_New_Task..."
             />
-            <button onClick={addTodo} className="absolute right-3 top-3 bottom-3 bg-green-500 text-black px-6 md:px-10 rounded-xl md:rounded-[1.5rem] font-black text-xs md:text-base hover:bg-green-400 transition-all">ADD_TASK</button>
+            <button 
+              onClick={addTodo} 
+              className="absolute right-3 top-3 bottom-3 bg-green-500 text-black px-6 md:px-10 rounded-xl md:rounded-[1.5rem] font-black text-xs md:text-base hover:bg-green-400 transition-all"
+            >
+              ADD_TASK
+            </button>
           </div>
           
+          {/* Category Selection Chips */}
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             {categories.map((cat) => (
               <button
@@ -185,44 +195,58 @@ export default function TodoPage() {
           ))}
         </div>
 
-        {/* Todo List with Animasi */}
+        {/* Todo List dengan Animasi Baru */}
         <div className="space-y-4 md:space-y-5">
           {filteredTodos.map((todo) => (
             <div 
               key={todo.id} 
-              className="group animate-in fade-in slide-in-from-bottom-4 duration-500 bg-slate-800/40 backdrop-blur-xl p-5 md:p-7 border border-white/5 rounded-[1.5rem] md:rounded-[2.2rem] hover:border-green-500/40 transition-all shadow-xl"
+              className="animate-fade-in-up bg-slate-800/40 backdrop-blur-xl p-5 md:p-7 border border-white/5 rounded-[1.5rem] md:rounded-[2.2rem] hover:border-green-500/40 transition-all shadow-xl"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4 md:gap-6 flex-1">
-                  <input 
-                    type="checkbox" 
-                    checked={todo.is_completed} 
-                    onChange={() => toggleComplete(todo.id, todo.is_completed)}
-                    className="h-7 w-7 md:h-9 md:w-9 rounded-xl border-2 border-white/20 bg-black/40 appearance-none checked:bg-green-500 checked:border-green-500 cursor-pointer transition-all"
-                  />
+                  <div className="relative flex items-center h-7 w-7 md:h-9 md:w-9">
+                    <input 
+                      type="checkbox" 
+                      checked={todo.is_completed} 
+                      onChange={() => toggleComplete(todo.id, todo.is_completed)}
+                      className="peer h-7 w-7 md:h-9 md:w-9 rounded-xl border-2 border-white/20 bg-black/40 appearance-none checked:bg-green-500 checked:border-green-500 cursor-pointer transition-all hover:border-green-500/50"
+                    />
+                    <span className="absolute text-black font-black text-xs md:text-sm left-2 md:left-3 opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">✓</span>
+                  </div>
                   <div className="flex flex-col">
-                    <span className={`font-mono text-sm md:text-lg transition-all ${todo.is_completed ? 'text-slate-500 line-through italic opacity-60' : 'text-slate-100 font-medium'}`}>{todo.task}</span>
-                    <span className={`text-[8px] md:text-[10px] font-bold uppercase tracking-[0.2em] mt-1 ${todo.category === 'ITERA' ? 'text-blue-400' : todo.category === 'Project' ? 'text-purple-400' : 'text-green-400'}`}>{todo.category || 'Pribadi'}</span>
+                    <span className={`font-mono text-sm md:text-lg tracking-tight transition-all duration-500 ${todo.is_completed ? 'text-slate-500 line-through italic opacity-60' : 'text-slate-100 font-medium'}`}>
+                      {todo.task}
+                    </span>
+                    <span className={`text-[8px] md:text-[10px] font-bold uppercase tracking-[0.2em] mt-1 ${todo.category === 'ITERA' ? 'text-blue-400' : todo.category === 'Project' ? 'text-purple-400' : 'text-green-400'}`}>
+                      {todo.category || 'Pribadi'}
+                    </span>
                   </div>
                 </div>
-                <button onClick={() => deleteTodo(todo.id)} className="px-3 py-2 text-slate-700 hover:text-red-500 transition-all font-mono text-[10px] md:text-xs uppercase">[terminate]</button>
+                <button 
+                  onClick={() => deleteTodo(todo.id)}
+                  className="px-3 py-2 text-slate-600 hover:text-red-500 md:opacity-0 md:group-hover:opacity-100 transition-all font-mono text-[10px] md:text-xs uppercase"
+                >
+                  [terminate]
+                </button>
               </div>
             </div>
           ))}
         </div>
 
-        {/* State Kosong */}
+        {/* Empty State */}
         {filteredTodos.length === 0 && !loading && (
-          <div className="text-center py-20 md:py-32 bg-slate-900/40 rounded-[2rem] md:rounded-[4rem] border border-dashed border-white/10">
+          <div className="text-center py-20 md:py-32 bg-slate-900/40 rounded-[2rem] md:rounded-[4rem] border border-dashed border-white/10 backdrop-blur-sm">
             <p className="text-green-500/20 text-4xl md:text-6xl mb-4 italic font-black tracking-widest uppercase">IDLE_CMD</p>
             <p className="text-slate-600 font-mono text-[10px] md:text-sm uppercase tracking-[0.5em]">System_Awaiting_Input</p>
           </div>
         )}
 
         <footer className="pt-10 md:pt-20 text-center">
-          <p className="text-[9px] md:text-[11px] text-slate-700 font-black uppercase tracking-[0.7em]">RavenOS // ITERA_INF_SYS // V.2.8.4</p>
+          <div className="inline-block py-2 px-8 bg-white/5 rounded-full border border-white/5">
+            <p className="text-[9px] md:text-[11px] text-slate-700 font-black uppercase tracking-[0.7em]">RavenOS // ITERA_INF_SYS // V.2.8.4</p>
+          </div>
         </footer>
       </div>
     </main>
-  )
+  );
 }
