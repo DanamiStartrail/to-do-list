@@ -125,6 +125,15 @@ export default function TodoPage() {
       // Jika berhasil, fetch diam-diam untuk sinkronisasi ID asli dari DB
       fetchTodos()
     }
+    if (!error && priority === 'High') {
+      // Pemicu notifikasi untuk tugas mendesak
+      if (Notification.permission === 'granted') {
+        new Notification("TUGAS PENTING DITAMBAHKAN", {
+          body: `Tugas: ${task} telah masuk ke sistem dengan prioritas tinggi.`,
+          icon: "/icon-192x192.png"
+        });
+      }
+    }
   }
 
   const handleToggle = async (id: string, is_completed: boolean) => {
