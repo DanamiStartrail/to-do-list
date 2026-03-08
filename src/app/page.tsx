@@ -24,10 +24,10 @@ export default function TodoPage() {
   const priorityOrder: Record<string, number> = { 'High': 1, 'Medium': 2, 'Low': 3 };
 
   useEffect(() => {
-    // Panggil kedua fungsi ini saat booting
-    checkUser()
-    fetchTodos()
-  }, [])
+  checkUser();
+  fetchTodos();
+  requestNotificationPermission(); // Tambahkan ini
+}, []);
 
   // Fungsi Check User yang sudah diperbaiki
   const checkUser = async () => {
@@ -46,7 +46,24 @@ export default function TodoPage() {
       console.log("Offline mode: Menggunakan sesi lokal")
     }
   }
-  
+
+  const requestNotificationPermission = async () => {
+  if (!('Notification' in window)) {
+    console.log("Browser ini tidak mendukung notifikasi.");
+    return;
+  }
+
+  const permission = await Notification.requestPermission();
+  if (permission === 'granted') {
+    console.log("Izin notifikasi diberikan!");
+    // Nanti kita bisa kirim notifikasi percobaan di sini
+    new Notification("RAVEN LIST", {
+      body: "Sistem Notifikasi Aktif. Root_Access_Granted.",
+      icon: "/icon-192x192.png" // Pastikan icon ini ada di folder public kamu
+    });
+  }
+};
+
   const fetchTodos = async () => {
     // 1. Ambil data dari LocalStorage dulu (Offline Support)
     if (typeof window !== 'undefined') {
