@@ -4,7 +4,12 @@ const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development'
+  // Pastikan bagian ini TIDAK mematikan PWA saat kamu deploy
+  disable: process.env.NODE_ENV === 'development',
+  // Tambahkan ini agar semua halaman di-cache secara agresif
+  fallbacks: {
+    document: '/~offline', // Opsi jika ingin halaman khusus, tapi kita ingin halaman utama tetap tampil
+  }
 });
 
 const nextConfig: NextConfig = {

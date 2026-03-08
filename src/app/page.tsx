@@ -21,13 +21,32 @@ export default function TodoPage() {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
-  // Urutan Prioritas untuk Sorting
   const priorityOrder: Record<string, number> = { 'High': 1, 'Medium': 2, 'Low': 3 };
 
   useEffect(() => {
+    // Panggil kedua fungsi ini saat booting
+    checkUser()
     fetchTodos()
   }, [])
 
+  // Fungsi Check User yang sudah diperbaiki
+  const checkUser = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      // Jika tidak ada user dan tidak ada sesi tersimpan, baru tendang ke login
+      if (!user) {
+        // Cek apakah ada sesi Supabase di localStorage (tanda sudah pernah login)
+        const hasSession = Object.keys(localStorage).some(key => key.startsWith('sb-'))
+        if (!hasSession) {
+          router.push('/login')
+        }
+      }
+    } catch (error) {
+      console.log("Offline mode: Menggunakan sesi lokal")
+    }
+  }
+  
   const fetchTodos = async () => {
     // 1. Ambil data dari LocalStorage dulu (Offline Support)
     if (typeof window !== 'undefined') {
