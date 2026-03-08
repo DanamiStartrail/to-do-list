@@ -6,7 +6,14 @@ import { BinaryBackground } from '@/components/todo/BinaryBackground'
 import { TodoItem } from '@/components/todo/TodoItem'
 import { TodoForm } from '@/components/todo/TodoForm'
 
-interface Todo { id: string; task: string; is_completed: boolean; category: string; priority: string;inserted_at: string; }
+interface Todo { 
+  id: string; 
+  task: string; 
+  is_completed: boolean; 
+  category: string; 
+  priority: string; 
+  inserted_at: string; 
+}
 
 export default function TodoPage() {
   const [todos, setTodos] = useState<Todo[]>([])
@@ -14,47 +21,111 @@ export default function TodoPage() {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
-  useEffect(() => { fetchTodos() }, [])
+  // Urutan Prioritas untuk Sorting
+  const priorityOrder: Record<string, number> = { 'High': 1, 'Medium': 2, 'Low': 3 };
+
+  useEffect(() => {
+    fetchTodos()
+  }, [])
 
   const fetchTodos = async () => {
-    const { data } = await supabase.from('todos').select('*').order('inserted_at', { ascending: false })
-    if (data) setTodos(data as Todo[])
+    // 1. Ambil data dari LocalStorage dulu (Offline Support)
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('raven_todos')
+      if (saved) {
+        setTodos(JSON.parse(saved))
+        setLoading(false)
+      }
+    }
+
+    // 2. Ambil data segar dari Supabase
+    const { data, error } = await supabase
+      .from('todos')
+      .select('*')
+      .order('inserted_at', { ascending: false })
+
+    if (data) {
+      const freshData = data as Todo[]
+      setTodos(freshData)
+      // Simpan ke LocalStorage untuk akses offline berikutnya
+      localStorage.setItem('raven_todos', JSON.stringify(freshData))
+    }
     setLoading(false)
   }
 
   const handleAdd = async (task: string, category: string, priority: string) => {
+    if (!task.trim()) return
+
+    // --- OPTIMISTIC UPDATE START ---
+    const tempId = Math.random().toString(36).substring(7)
+    const newTodo: Todo = {
+      id: tempId,
+      task,
+      category,
+      priority,
+      is_completed: false,
+      inserted_at: new Date().toISOString(),
+    }
+
+    // Langsung update state agar instan di layar
+    const updatedTodos = [newTodo, ...todos]
+    setTodos(updatedTodos)
+    localStorage.setItem('raven_todos', JSON.stringify(updatedTodos))
+    // --- OPTIMISTIC UPDATE END ---
+
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('todos').insert([{ task, user_id: user?.id, category, priority }])
-    fetchTodos()
+    const { error } = await supabase.from('todos').insert([{ 
+      task, 
+      user_id: user?.id, 
+      category, 
+      priority 
+    }])
+
+    if (error) {
+      console.error("Sync Error:", error.message)
+      // Jika error, fetch ulang untuk mengembalikan list ke kondisi asli di database
+      fetchTodos()
+    } else {
+      // Jika berhasil, fetch diam-diam untuk sinkronisasi ID asli dari DB
+      fetchTodos()
+    }
   }
 
   const handleToggle = async (id: string, is_completed: boolean) => {
+    // Optimistic Toggle
+    const updated = todos.map(t => t.id === id ? { ...t, is_completed: !is_completed } : t)
+    setTodos(updated)
+    localStorage.setItem('raven_todos', JSON.stringify(updated))
+
     await supabase.from('todos').update({ is_completed: !is_completed }).eq('id', id)
     fetchTodos()
   }
 
   const handleDelete = async (id: string) => {
+    // Optimistic Delete
+    const updated = todos.filter(t => t.id !== id)
+    setTodos(updated)
+    localStorage.setItem('raven_todos', JSON.stringify(updated))
+
     await supabase.from('todos').delete().eq('id', id)
     fetchTodos()
   }
 
-// Tambahkan logika urutan prioritas
-const priorityOrder: Record<string, number> = { 'High': 1, 'Medium': 2, 'Low': 3 };
+  // Logika Filter + Sorting (Prioritas dulu, baru Waktu)
+  const filteredTodos = todos
+    .filter(t => filter === 'Semua' ? true : t.category === filter)
+    .sort((a, b) => {
+      const orderA = priorityOrder[a.priority] || 2
+      const orderB = priorityOrder[b.priority] || 2
+      if (orderA !== orderB) return orderA - orderB
+      return new Date(b.inserted_at).getTime() - new Date(a.inserted_at).getTime()
+    })
 
-const filteredTodos = todos
-  .filter(t => filter === 'Semua' ? true : t.category === filter)
-  .sort((a, b) => {
-    // 1. Urutkan berdasarkan prioritas (High > Medium > Low)
-    const orderA = priorityOrder[a.priority] || 2;
-    const orderB = priorityOrder[b.priority] || 2;
-    
-    if (orderA !== orderB) {
-      return orderA - orderB;
-    }
-    
-    // 2. Jika prioritas sama, urutkan berdasarkan waktu (terbaru di atas)
-    return new Date(b.inserted_at).getTime() - new Date(a.inserted_at).getTime();
-  });
+  if (loading) return (
+    <div className="min-h-screen bg-[#0a0f14] flex items-center justify-center font-mono text-green-400">
+      BOOTING_SYSTEM...
+    </div>
+  )
   if (loading) return <div className="min-h-screen bg-[#0a0f14] flex items-center justify-center text-green-400 font-mono">BOOTING...</div>
 
   return (
