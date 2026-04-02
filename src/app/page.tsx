@@ -172,38 +172,36 @@ export default function TodoPage() {
   )
   if (loading) return <div className="min-h-screen bg-[#0a0f14] flex items-center justify-center text-green-400 font-mono">BOOTING...</div>
 
-  // Ganti return di src/app/page.tsx kamu:
   return (
-    <main className="min-h-screen bg-[#050505] text-white py-20 px-4 relative">
-      {/* Glow Ambient Sangat Tipis */}
-      <div className="fixed top-[-10%] left-[-10%] w-[600px] h-[600px] bg-emerald-500/[0.03] blur-[150px] rounded-full pointer-events-none hidden md:block"></div>
-
-      <div className="relative z-10 w-full max-w-[750px] mx-auto">
-        
-        {/* Menggunakan TodoForm yang sudah dirombak */}
-        <TodoForm onAdd={handleAdd} onLogout={() => { supabase.auth.signOut(); router.push('/login'); }} />
-        
-        {/* Filter Toolbar - Gaya Simpel Teks Saja */}
-        <div className="flex items-center gap-6 px-4 mb-8">
-          <span className="text-[10px] font-semibold text-white/20 uppercase tracking-[0.3em] shrink-0">View :</span>
-          {['Semua', 'Pribadi', 'ITERA', 'Project'].map(f => (
-            <button key={f} onClick={() => setFilter(f)} className={`text-[11px] font-semibold uppercase tracking-[0.25em] transition-all ${filter === f ? 'text-emerald-400' : 'text-white/20 hover:text-white/40'}`}>{f}</button>
-          ))}
-        </div>
-
-        {/* List Tugas yang Mewah */}
-        <div className="space-y-6">
-          {filteredTodos.map(todo => <TodoItem key={todo.id} todo={todo} onToggle={handleToggle} onDelete={handleDelete} />)}
-        </div>
-
-        {/* Empty State - Super Minimalis */}
-        {filteredTodos.length === 0 && !loading && (
-          <div className="text-center py-20 bg-[#0d0d0d] rounded-2xl border border-dashed border-white/[0.03]">
-            <p className="text-white/10 text-xl font-light tracking-[0.5em] uppercase">SYSTEM_AWAITING_INPUT</p>
-          </div>
-        )}
-
+  <main className="min-h-screen bg-[#F8F9FA] text-[#1A1A1A] py-16 px-4 relative overflow-x-hidden font-sans">
+    {/* Glow Ambient Lembut (Warna Teal/Emerald Tipis) */}
+    <div className="fixed top-[-10%] right-[-10%] w-[500px] h-[500px] bg-emerald-200/30 blur-[120px] rounded-full pointer-events-none"></div>
+    
+    <div className="relative z-10 w-full max-w-[700px] mx-auto">
+      <TodoForm onAdd={handleAdd} onLogout={() => { supabase.auth.signOut(); router.push('/login'); }} />
+      
+      {/* Filter View - Minimalis Tanpa Kotak */}
+      <div className="flex items-center gap-8 px-4 mb-10 overflow-x-auto scrollbar-hide">
+        <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em] shrink-0">Filter</span>
+        {['Semua', 'Pribadi', 'ITERA', 'Project'].map(f => (
+          <button 
+            key={f} 
+            onClick={() => setFilter(f)} 
+            className={`text-[11px] font-bold uppercase tracking-[0.2em] transition-all pb-1 border-b-2 ${
+              filter === f ? 'border-emerald-500 text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            {f}
+          </button>
+        ))}
       </div>
-    </main>
-  );
+
+      <div className="space-y-4">
+        {filteredTodos.map(todo => (
+          <TodoItem key={todo.id} todo={todo} onToggle={handleToggle} onDelete={handleDelete} />
+        ))}
+      </div>
+    </div>
+  </main>
+);
 }
