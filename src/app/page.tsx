@@ -181,7 +181,7 @@ export default function Home() {
             <div className="absolute inset-0 bg-emerald-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
             <div className="relative z-10">
               <div className="inline-flex p-4 rounded-full bg-slate-50 mb-6 text-slate-200">
-                <svg xmlns="http://www.w.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               </div>
               <p className="text-slate-300 text-[10px] font-black tracking-[0.4em] uppercase mb-4">Protocol_Idle</p>
               <h3 className="text-slate-900 font-black text-xl tracking-tighter italic">"{activeQuote}"</h3>
