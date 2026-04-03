@@ -11,9 +11,23 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [showInstallBtn, setShowInstallBtn] = useState(false)
+  const [currentTime, setCurrentTime] = useState(new Date())
   const router = useRouter()
 
-  // 1. Proteksi Sesi & Cek User
+  // 1. Time & Greeting Logic
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const getGreeting = () => {
+    const hour = currentTime.getHours()
+    if (hour < 12) return 'Good Morning'
+    if (hour < 17) return 'Good Afternoon'
+    return 'Good Evening'
+  }
+
+  // 2. Proteksi Sesi & Cek User
   const checkUser = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -26,7 +40,7 @@ export default function Home() {
     }
   }
 
-  // 2. Fetch Data (Supabase + LocalStorage fallback)
+  // 3. Fetch Data
   const fetchTodos = async () => {
     const saved = localStorage.getItem('raven_todos')
     if (saved) {
@@ -46,7 +60,7 @@ export default function Home() {
     setLoading(false)
   }
 
-  // 3. Logika Deteksi PWA Install
+  // 4. Lifecycle Hooks
   useEffect(() => {
     checkUser()
     fetchTodos()
@@ -69,7 +83,7 @@ export default function Home() {
     setDeferredPrompt(null)
   }
 
-  // 4. Handlers (Add, Toggle, Delete)
+  // 5. Handlers
   const handleAdd = async (task: string, category: string, priority: string) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -108,7 +122,7 @@ export default function Home() {
     }
   }
 
-  // 5. Logika Filter & Stats
+  // 6. Filter & Stats Logic
   const filteredTodos = todos.filter(t => filter === 'Semua' ? true : t.category === filter)
 
   const stats = {
@@ -124,6 +138,20 @@ export default function Home() {
       
       <div className="relative z-10 w-full max-w-[750px] mx-auto">
         
+        {/* Dynamic Header Section */}
+        <div className="flex justify-between items-end mb-12 px-2">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-1">Status_Online</p>
+            <h2 className="text-4xl font-black tracking-tighter text-slate-900">{getGreeting()}, Danta</h2>
+          </div>
+          <div className="text-right hidden md:block">
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 mb-1">Local_Time</p>
+            <p className="text-2xl font-black tracking-tighter text-slate-900">
+              {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+            </p>
+          </div>
+        </div>
+
         {/* Form Input Section */}
         <TodoForm 
           onAdd={handleAdd} 
@@ -135,14 +163,14 @@ export default function Home() {
           <div className="mb-8 px-2 animate-in fade-in slide-in-from-top-4 duration-700">
             <button 
               onClick={handleInstallClick}
-              className="w-full bg-emerald-500/10 border border-emerald-500/20 py-4 rounded-[24px] flex items-center justify-center gap-4 group transition-all hover:bg-emerald-500/20"
+              className="w-full bg-emerald-500/10 border border-emerald-500/20 py-5 rounded-[28px] flex items-center justify-center gap-4 group transition-all hover:bg-emerald-500/20"
             >
-              <div className="w-8 h-8 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <div className="w-9 h-9 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               </div>
               <div className="text-left">
                 <p className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-700 leading-none mb-1">System_Update</p>
-                <p className="text-xs font-bold text-emerald-900">Add Raven to Home Screen</p>
+                <p className="text-sm font-bold text-emerald-900">Add Raven to Home Screen</p>
               </div>
             </button>
           </div>
@@ -193,7 +221,7 @@ export default function Home() {
 
         {/* Empty State */}
         {filteredTodos.length === 0 && !loading && (
-          <div className="text-center py-24 bg-white rounded-[32px] border border-dashed border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.02)]">
+          <div className="text-center py-24 bg-white rounded-[40px] border border-dashed border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.02)]">
             <p className="text-slate-300 text-sm font-medium tracking-[0.2em] uppercase">No active protocols found</p>
           </div>
         )}
