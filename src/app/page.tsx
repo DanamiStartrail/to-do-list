@@ -103,6 +103,19 @@ export default function Home() {
     }
   }
 
+  const handlePurge = async () => {
+    const completedIds = todos.filter(t => t.is_completed).map(t => t.id)
+    if (completedIds.length === 0) return
+    if (!confirm(`Purge ${completedIds.length} completed tasks?`)) return
+
+    const { error } = await supabase.from('todos').delete().in('id', completedIds)
+    if (!error) {
+      const updated = todos.filter(t => !t.is_completed)
+      setTodos(updated)
+      localStorage.setItem('raven_todos', JSON.stringify(updated))
+    }
+  }
+
   const filteredTodos = todos.filter(t => filter === 'Semua' ? true : t.category === filter)
   const stats = {
     pending: todos.filter(t => !t.is_completed).length,
@@ -117,6 +130,7 @@ export default function Home() {
       
       <div className="relative z-10 w-full max-w-[750px] mx-auto">
         
+        {/* Header Section */}
         <div className="flex justify-between items-end mb-12 px-2">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-1">Status_Online</p>
@@ -160,13 +174,25 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="flex items-center gap-8 px-6 mb-10 overflow-x-auto scrollbar-hide py-2">
-          <span className="text-[10px] font-black text-slate-200 uppercase tracking-[0.4em] shrink-0">View_Control</span>
-          {['Semua', 'Pribadi', 'ITERA', 'Project'].map(f => (
-            <button key={f} onClick={() => setFilter(f)} className={`text-[11px] font-bold uppercase tracking-[0.2em] transition-all pb-1 border-b-2 ${filter === f ? 'border-emerald-500 text-slate-900' : 'border-transparent text-slate-300 hover:text-slate-500'}`}>
-              {f}
+        {/* View Control & Purge Button */}
+        <div className="flex items-center px-6 mb-10 overflow-x-auto scrollbar-hide py-2">
+          <div className="flex items-center gap-8 mr-8 shrink-0">
+            <span className="text-[10px] font-black text-slate-200 uppercase tracking-[0.4em]">View_Control</span>
+            {['Semua', 'Pribadi', 'ITERA', 'Project'].map(f => (
+              <button key={f} onClick={() => setFilter(f)} className={`text-[11px] font-bold uppercase tracking-[0.2em] transition-all pb-1 border-b-2 ${filter === f ? 'border-emerald-500 text-slate-900' : 'border-transparent text-slate-300 hover:text-slate-500'}`}>
+                {f}
+              </button>
+            ))}
+          </div>
+          
+          {stats.done > 0 && (
+            <button 
+              onClick={handlePurge}
+              className="ml-auto text-[9px] font-black text-rose-400 hover:text-rose-600 uppercase tracking-[0.2em] transition-all bg-rose-50/50 px-4 py-2 rounded-full border border-rose-100/50"
+            >
+              [ Purge_Completed ]
             </button>
-          ))}
+          )}
         </div>
 
         <div className="space-y-4 px-2">
@@ -175,7 +201,7 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Empty State dengan Random Quote */}
+        {/* Empty State */}
         {filteredTodos.length === 0 && !loading && (
           <div className="text-center py-28 bg-white rounded-[40px] border border-dashed border-slate-200/60 shadow-[0_20px_50px_rgba(0,0,0,0.02)] relative overflow-hidden group">
             <div className="absolute inset-0 bg-emerald-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
