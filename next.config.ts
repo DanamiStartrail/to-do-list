@@ -1,13 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 1. TAMBAHKAN INI: Mendiamkan error Turbopack agar mau menerima config Webpack
-  turbopack: {},
-
-  // 2. Tetap pertahankan fungsi webpack kosong untuk next-pwa
-  webpack: (config) => {
-    return config;
-  },
-
   images: {
     remotePatterns: [
       {
@@ -18,11 +10,16 @@ const nextConfig = {
   },
 };
 
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  register: true,
-  skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
+const withPWA = require("@ducanh2912/next-pwa").default({
+  dest: "public",
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
+  reloadOnOnline: true,
+  swMinify: true,
+  disable: process.env.NODE_ENV === "development",
+  workboxOptions: {
+    disableDevLogs: true,
+  },
 });
 
 module.exports = withPWA(nextConfig);
