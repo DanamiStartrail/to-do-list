@@ -48,12 +48,34 @@ export default function Home() {
   }
 
   const fetchTodos = async () => {
-    const saved = localStorage.getItem('raven_todos')
-    if (saved) { setTodos(JSON.parse(saved)); setLoading(false); }
-    const { data, error } = await supabase.from('todos').select('*').order('created_at', { ascending: false })
-    if (!error && data) { setTodos(data); localStorage.setItem('raven_todos', JSON.stringify(data)); }
-    setLoading(false)
+  setLoading(true);
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    setLoading(false);
+    return;
   }
+
+  // Bypass Cache dengan query langsung
+  const { data, error } = await supabase
+    .from('todos')
+    .select('*');
+
+  if (error) {
+    console.error("Critical Fetch Error:", error.message);
+  } else {
+    // LOG UNTUK DEBUGGING (Cek di F12 Laptop & Remote Debugging HP)
+    console.log("DB_SYNC_REPORT:", {
+      total_found: data.length,
+      user_id_active: user.id,
+      timestamp: new Date().toISOString()
+    });
+
+    setTodos(data);
+    localStorage.setItem('raven_todos', JSON.stringify(data));
+  }
+  setLoading(false);
+};
 
   useEffect(() => {
     checkUser()
