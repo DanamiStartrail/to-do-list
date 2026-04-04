@@ -2,47 +2,60 @@
 
 interface TodoItemProps {
   todo: any;
-  onToggle: (id: string, completed: boolean) => void;
+  onToggle: (id: string, is_completed: boolean) => void;
   onDelete: (id: string) => void;
 }
 
-export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => (
-  <div className="group bg-white border border-slate-100 p-5 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.08)] transition-all duration-500 flex items-center justify-between">
-    <div className="flex items-center gap-5">
-      {/* Checkbox Lingkaran Elegan */}
+export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
+  const formatRelativeTime = (dateString: string) => {
+    const now = new Date();
+    const past = new Date(dateString);
+    const diffInMs = now.getTime() - past.getTime();
+    const diffInMins = Math.floor(diffInMs / 60000);
+
+    if (diffInMins < 1) return 'Just now';
+    if (diffInMins < 60) return `${diffInMins}m ago`;
+    if (diffInMins < 1440) return `${Math.floor(diffInMins / 60)}h ago`;
+    return past.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+  };
+
+  return (
+    <div className={`group flex items-center gap-4 p-6 bg-white rounded-[28px] border border-slate-100 transition-all hover:shadow-[0_20px_50px_rgba(0,0,0,0.04)] ${todo.is_completed ? 'opacity-60 bg-slate-50/50' : ''}`}>
+      {/* Checkbox */}
       <button 
         onClick={() => onToggle(todo.id, todo.is_completed)}
-        className={`w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center ${
-          todo.is_completed ? 'bg-emerald-500 border-emerald-500' : 'border-slate-200 hover:border-emerald-400'
+        className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
+          todo.is_completed 
+          ? 'bg-emerald-500 border-emerald-500 text-white' 
+          : 'border-slate-200 hover:border-emerald-400'
         }`}
       >
-        {todo.is_completed && <span className="text-white text-[10px]">✓</span>}
+        {todo.is_completed && (
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        )}
       </button>
-      
-      <div className="flex flex-col">
-        <span className={`text-base font-medium tracking-tight transition-all ${
-          todo.is_completed ? 'text-slate-300 line-through' : 'text-slate-800'
-        }`}>
+
+      {/* Task Info */}
+      <div className="flex-1 min-w-0">
+        <h3 className={`text-sm font-bold tracking-tight truncate ${todo.is_completed ? 'line-through text-slate-400' : 'text-slate-900'}`}>
           {todo.task}
-        </span>
-        <div className="flex items-center gap-3 mt-1">
-          {/* Tag Kategori Minimalis */}
-          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-2 py-0.5 rounded">
-            {todo.category}
-          </span>
-          {/* Indikator Prioritas Kecil */}
-          <span className={`w-1.5 h-1.5 rounded-full ${
-            todo.priority === 'High' ? 'bg-rose-500' : todo.priority === 'Medium' ? 'bg-amber-400' : 'bg-emerald-400'
-          }`} />
+        </h3>
+        <div className="flex items-center gap-3">
+          <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">{todo.category}</p>
+          <span className="w-1 h-1 rounded-full bg-slate-200"></span>
+          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+            {formatRelativeTime(todo.created_at)}
+          </p>
         </div>
       </div>
+
+      {/* Action: Delete */}
+      <button 
+        onClick={() => onDelete(todo.id)}
+        className="opacity-0 group-hover:opacity-100 p-2 text-slate-300 hover:text-rose-500 transition-all"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+      </button>
     </div>
-    
-    <button 
-      onClick={() => onDelete(todo.id)}
-      className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 transition-all text-[10px] font-bold tracking-tighter"
-    >
-      DELETE
-    </button>
-  </div>
-);
+  );
+};
