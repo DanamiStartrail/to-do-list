@@ -15,8 +15,12 @@ const geistMono = Geist_Mono({
 // Update Metadata untuk identitas aplikasi di HP
 export const metadata: Metadata = {
   title: "Raven List",
-  description: "Terminal Todo List for Informatics Students",
-  manifest: "/manifest.json", // Menghubungkan ke file manifest yang kamu buat
+  description: "Platinum Productivity System",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.ico", // Ganti file ini di folder public
+    apple: "/icon-192x192.png",
+  },
 };
 
 export default function RootLayout({

@@ -1,19 +1,19 @@
 {
   "name": "Raven List",
-  "short_name": "RavenList",
-  "description": "Terminal Todo List for Informatics Students",
+  "short_name": "Raven",
+  "description": "Platinum Productivity System",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0f14",
-  "theme_color": "#00ff41",
+  "background_color": "#F8F9FA",
+  "theme_color": "#10b981",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
