@@ -18,8 +18,8 @@ export const metadata: Metadata = {
   description: "Platinum Productivity System",
   manifest: "/manifest.json",
   icons: {
-    icon: "/favicon.ico", // Ganti file ini di folder public
-    apple: "/icon-192x192.png",
+    icon: "/favicon.ico",
+    apple: "/icon-512.png", // Pakai file yang ada di folder public kamu
   },
 };
 
