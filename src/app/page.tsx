@@ -25,7 +25,6 @@ export default function Home() {
   const [activeQuote, setActiveQuote] = useState("")
   const router = useRouter()
 
-  // 1. Sinkronisasi Waktu
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000)
     return () => clearInterval(timer)
@@ -38,7 +37,6 @@ export default function Home() {
     return 'Good Evening'
   }
 
-  // 2. Proteksi Sesi & Cek User (Anti-Mismatch)
   const checkUser = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -46,29 +44,23 @@ export default function Home() {
         const hasSession = Object.keys(localStorage).some(key => key.startsWith('sb-'))
         if (!hasSession) router.push('/login')
       }
-    } catch (error) { console.log("System: Offline Mode Enabled") }
+    } catch (error) { console.log("Offline Mode") }
   }
 
-  // 3. Fetch Data Tanpa Kompromi (Anti-Stale)
   const fetchTodos = async () => {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      setLoading(false)
-      return
-    }
+    if (!user) { setLoading(false); return; }
 
     const { data, error } = await supabase
       .from('todos')
       .select('*')
-      .eq('user_id', user.id) // Filter ketat berdasarkan UID
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
     if (!error && data) {
       setTodos(data)
       localStorage.setItem('raven_todos', JSON.stringify(data))
-      console.log(`Sync complete: ${data.length} items loaded for user ${user.id}`)
     } else {
       const saved = localStorage.getItem('raven_todos')
       if (saved) setTodos(JSON.parse(saved))
@@ -76,28 +68,20 @@ export default function Home() {
     setLoading(false)
   }
 
-  // 4. Inisialisasi PWA & Data
   useEffect(() => {
     checkUser()
     fetchTodos()
-
-    const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault()
-      setDeferredPrompt(e)
-      setShowInstallBtn(true)
-    }
+    const handleBeforeInstallPrompt = (e: any) => { e.preventDefault(); setDeferredPrompt(e); setShowInstallBtn(true); }
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
   }, [])
 
-  // Quote Generator
   useEffect(() => {
     if (todos.length === 0) {
       setActiveQuote(TECH_QUOTES[Math.floor(Math.random() * TECH_QUOTES.length)])
     }
   }, [todos.length])
 
-  // PWA Installer
   const handleInstallClick = async () => {
     if (!deferredPrompt) return
     deferredPrompt.prompt()
@@ -106,7 +90,6 @@ export default function Home() {
     setDeferredPrompt(null)
   }
 
-  // Database Handlers
   const handleAdd = async (task: string, category: string, priority: string) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -137,7 +120,6 @@ export default function Home() {
     const completedIds = todos.filter(t => t.is_completed).map(t => t.id)
     if (completedIds.length === 0) return
     if (!confirm(`Purge ${completedIds.length} completed tasks?`)) return
-
     const { error } = await supabase.from('todos').delete().in('id', completedIds)
     if (!error) {
       const updated = todos.filter(t => !t.is_completed)
@@ -145,7 +127,16 @@ export default function Home() {
     }
   }
 
-  const filteredTodos = todos.filter(t => filter === 'Semua' ? true : t.category === filter)
+  // LOGIKA SMART SORTING: Belum Selesai (Top), Sudah Selesai (Bottom)
+  const filteredTodos = todos
+    .filter(t => filter === 'Semua' ? true : t.category === filter)
+    .sort((a, b) => {
+      if (a.is_completed === b.is_completed) {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      }
+      return a.is_completed ? 1 : -1
+    })
+
   const stats = {
     pending: todos.filter(t => !t.is_completed).length,
     urgent: todos.filter(t => t.priority === 'High' && !t.is_completed).length,
@@ -155,12 +146,10 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#F8F9FA] py-16 px-4 relative font-sans overflow-x-hidden">
-      {/* Background Decor */}
       <div className="fixed top-[-10%] right-[-10%] w-[500px] h-[500px] bg-emerald-200/20 blur-[120px] rounded-full pointer-events-none"></div>
       
       <div className="relative z-10 w-full max-w-[750px] mx-auto">
         
-        {/* Dynamic Header */}
         <div className="flex justify-between items-end mb-12 px-2">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-1">Status_Online</p>
@@ -176,9 +165,8 @@ export default function Home() {
 
         <TodoForm onAdd={handleAdd} onLogout={() => { supabase.auth.signOut(); router.push('/login'); }} />
 
-        {/* PWA Prompt */}
         {showInstallBtn && (
-          <div className="mb-8 px-2">
+          <div className="mb-8 px-2 animate-in fade-in slide-in-from-top-4 duration-700">
             <button onClick={handleInstallClick} className="w-full bg-emerald-500/10 border border-emerald-500/20 py-5 rounded-[28px] flex items-center justify-center gap-4 group transition-all hover:bg-emerald-500/20">
               <div className="w-9 h-9 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -191,7 +179,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12 px-2">
           {[
             { label: 'Pending', value: stats.pending },
@@ -206,7 +193,6 @@ export default function Home() {
           ))}
         </div>
 
-        {/* View Control */}
         <div className="flex items-center px-6 mb-10 overflow-x-auto scrollbar-hide py-2">
           <div className="flex items-center gap-8 mr-8 shrink-0">
             <span className="text-[10px] font-black text-slate-200 uppercase tracking-[0.4em]">View_Control</span>
@@ -223,18 +209,16 @@ export default function Home() {
           )}
         </div>
 
-        {/* Todo List */}
         <div className="space-y-4 px-2">
           {filteredTodos.map(todo => (
             <TodoItem key={todo.id} todo={todo} onToggle={handleToggle} onDelete={handleDelete} />
           ))}
         </div>
 
-        {/* Empty State */}
         {filteredTodos.length === 0 && !loading && (
           <div className="text-center py-28 bg-white rounded-[40px] border border-dashed border-slate-200/60 shadow-[0_20px_50px_rgba(0,0,0,0.02)] relative overflow-hidden group">
             <div className="absolute inset-0 bg-emerald-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-            <div className="relative z-10 text-center">
+            <div className="relative z-10">
               <p className="text-slate-300 text-[10px] font-black tracking-[0.4em] uppercase mb-4">Protocol_Idle</p>
               <h3 className="text-slate-900 font-black text-xl tracking-tighter italic">"{activeQuote}"</h3>
             </div>
