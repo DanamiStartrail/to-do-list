@@ -26,9 +26,23 @@ export default function Home() {
   const router = useRouter()
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000)
-    return () => clearInterval(timer)
-  }, [])
+  // PAKSA ambil data terbaru setiap kali halaman dibuka/di-refresh
+  const syncData = async () => {
+    await checkUser();
+    await fetchTodos(); // Ini akan menimpa LocalStorage dengan data DB yang asli
+  };
+  
+  syncData();
+
+  // Logika PWA tetap sama
+  const handleBeforeInstallPrompt = (e: any) => {
+    e.preventDefault();
+    setDeferredPrompt(e);
+    setShowInstallBtn(true);
+  };
+  window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+}, []);
 
   const getGreeting = () => {
     const hour = currentTime.getHours()
