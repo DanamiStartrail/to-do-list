@@ -8,14 +8,28 @@ interface TodoItemProps {
 
 export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
   const formatRelativeTime = (dateString: string) => {
+    if (!dateString) return 'No date';
+
     const now = new Date();
-    const past = new Date(dateString);
+    // Memperbaiki format string: mengganti spasi dengan 'T' agar kompatibel dengan ISO 8601
+    const formattedString = dateString.includes(' ') ? dateString.replace(' ', 'T') : dateString;
+    const past = new Date(formattedString);
+
+    // Validasi jika objek Date tidak valid (NaN)
+    if (isNaN(past.getTime())) {
+      return 'Invalid format';
+    }
+
     const diffInMs = now.getTime() - past.getTime();
     const diffInMins = Math.floor(diffInMs / 60000);
 
     if (diffInMins < 1) return 'Just now';
     if (diffInMins < 60) return `${diffInMins}m ago`;
-    if (diffInMins < 1440) return `${Math.floor(diffInMins / 60)}h ago`;
+    if (diffInMins < 1440) {
+      const hours = Math.floor(diffInMins / 60);
+      return `${hours}h ago`;
+    }
+    
     return past.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
   };
 

@@ -1,176 +1,14 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/lib/supabaseClient'
-import { useRouter } from 'next/navigation'
+import { useTodoLogic } from '@/hooks/useTodoLogic'
 import { TodoForm } from '@/components/todo/TodoForm'
 import { TodoItem } from '@/components/todo/TodoItem'
 
-const TECH_QUOTES = [
-  "Done is better than perfect.",
-  "Push your code, then drink your coffee.",
-  "Root access granted. Ready for next task?",
-  "Standardize the process, then automate.",
-  "Your potential is infinite, your time is not.",
-  "Fix the cause, not the symptom.",
-  "Commit often, perfect later."
-]
-
 export default function Home() {
-  const [todos, setTodos] = useState<any[]>([])
-  const [filter, setFilter] = useState('Semua')
-  const [loading, setLoading] = useState(true)
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
-  const [showInstallBtn, setShowInstallBtn] = useState(false)
-  const [currentTime, setCurrentTime] = useState(new Date())
-  const [activeQuote, setActiveQuote] = useState("")
-  const [userName, setUserName] = useState("User")
-  const router = useRouter()
-
-  // 1. Fungsi Fetch Utama (Dibuat stabil)
-  const fetchTodos = useCallback(async (userId: string) => {
-    const { data, error } = await supabase
-      .from('todos')
-      .select('*')
-      .eq('user_id', userId)
-    
-    if (!error && data) {
-      setTodos(data)
-      localStorage.setItem('raven_todos', JSON.stringify(data))
-      console.log("Sync Success:", data.length, "items")
-    } else if (error) {
-      console.error("Fetch Error:", error.message)
-    }
-  }, [])
-
-  // 2. Single Entry Point (Inisialisasi Aplikasi)
-  useEffect(() => {
-    const initApp = async () => {
-      setLoading(true)
-      
-      // Cek Sesi
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (!user) {
-        router.push('/login')
-        return
-      }
-
-      setUserName(user.email?.split('@')[0] || "Danta")
-      
-      // Ambil Data
-      await fetchTodos(user.id)
-      setLoading(false)
-    }
-
-    initApp()
-
-    // Timer Update
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000)
-
-    // PWA Logic
-    const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault()
-      setDeferredPrompt(e)
-      setShowInstallBtn(true)
-    }
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    
-    return () => {
-      clearInterval(timer)
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    }
-  }, [router, fetchTodos])
-
-  // Quote Generator
-  useEffect(() => {
-    if (todos.length === 0) {
-      setActiveQuote(TECH_QUOTES[Math.floor(Math.random() * TECH_QUOTES.length)])
-    }
-  }, [todos.length])
-
-  // Handler Actions
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return
-    deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
-    if (outcome === 'accepted') setShowInstallBtn(false)
-    setDeferredPrompt(null)
-  }
-
-  const handleAdd = async (task: string, category: string, priority: string) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    
-    const { data, error } = await supabase
-      .from('todos')
-      .insert([{ task, category, priority, user_id: user.id }])
-      .select()
-
-    if (!error && data) {
-      const updated = [data[0], ...todos]
-      setTodos(updated)
-      localStorage.setItem('raven_todos', JSON.stringify(updated))
-    }
-  }
-
-  const handleToggle = async (id: string, is_completed: boolean) => {
-    const { error } = await supabase
-      .from('todos')
-      .update({ is_completed: !is_completed })
-      .eq('id', id)
-
-    if (!error) {
-      const updated = todos.map(t => t.id === id ? { ...t, is_completed: !is_completed } : t)
-      setTodos(updated)
-      localStorage.setItem('raven_todos', JSON.stringify(updated))
-    }
-  }
-
-  const handleDelete = async (id: string) => {
-    const { error } = await supabase.from('todos').delete().eq('id', id)
-    if (!error) {
-      const updated = todos.filter(t => t.id !== id)
-      setTodos(updated)
-      localStorage.setItem('raven_todos', JSON.stringify(updated))
-    }
-  }
-
-  const handlePurge = async () => {
-    const completedIds = todos.filter(t => t.is_completed).map(t => t.id)
-    if (completedIds.length === 0) return
-    if (!confirm(`Purge ${completedIds.length} completed tasks?`)) return
-
-    const { error } = await supabase.from('todos').delete().in('id', completedIds)
-    if (!error) {
-      const updated = todos.filter(t => !t.is_completed)
-      setTodos(updated)
-      localStorage.setItem('raven_todos', JSON.stringify(updated))
-    }
-  }
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    localStorage.removeItem('raven_todos')
-    router.push('/login')
-  }
-
-  // Smart Sorting Logic
-  const filteredTodos = todos
-    .filter(t => filter === 'Semua' ? true : t.category === filter)
-    .sort((a, b) => {
-      if (a.is_completed === b.is_completed) {
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      }
-      return a.is_completed ? 1 : -1
-    })
-
-  const stats = {
-    pending: todos.filter(t => !t.is_completed).length,
-    urgent: todos.filter(t => t.priority === 'High' && !t.is_completed).length,
-    itera: todos.filter(t => t.category === 'ITERA' && !t.is_completed).length,
-    done: todos.filter(t => t.is_completed).length
-  }
+  const {
+    filter, setFilter, loading, showInstallBtn, currentTime, 
+    activeQuote, userName, filteredTodos, stats,
+    handleInstallClick, handleAdd, handleToggle, handleDelete, handlePurge, handleLogout
+  } = useTodoLogic();
 
   const getGreeting = () => {
     const hour = currentTime.getHours()
@@ -184,7 +22,7 @@ export default function Home() {
       <div className="fixed top-[-10%] right-[-10%] w-[500px] h-[500px] bg-emerald-200/20 blur-[120px] rounded-full pointer-events-none"></div>
       
       <div className="relative z-10 w-full max-w-[750px] mx-auto">
-        
+        {/* Header Section */}
         <div className="flex justify-between items-end mb-12 px-2">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-1">Status_Online</p>
@@ -200,6 +38,7 @@ export default function Home() {
 
         <TodoForm onAdd={handleAdd} onLogout={handleLogout} />
 
+        {/* Install Button */}
         {showInstallBtn && (
           <div className="mb-8 px-2 animate-in fade-in slide-in-from-top-4 duration-700">
             <button onClick={handleInstallClick} className="w-full bg-emerald-500/10 border border-emerald-500/20 py-5 rounded-[28px] flex items-center justify-center gap-4 group transition-all hover:bg-emerald-500/20">
@@ -214,6 +53,7 @@ export default function Home() {
           </div>
         )}
 
+        {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12 px-2">
           {[
             { label: 'Pending', value: stats.pending },
@@ -228,6 +68,7 @@ export default function Home() {
           ))}
         </div>
 
+        {/* Filter & Purge */}
         <div className="flex items-center px-6 mb-10 overflow-x-auto scrollbar-hide py-2">
           <div className="flex items-center gap-8 mr-8 shrink-0">
             <span className="text-[10px] font-black text-slate-200 uppercase tracking-[0.4em]">View_Control</span>
@@ -244,12 +85,14 @@ export default function Home() {
           )}
         </div>
 
+        {/* Todo List */}
         <div className="space-y-4 px-2">
           {filteredTodos.map(todo => (
             <TodoItem key={todo.id} todo={todo} onToggle={handleToggle} onDelete={handleDelete} />
           ))}
         </div>
 
+        {/* Empty State */}
         {filteredTodos.length === 0 && !loading && (
           <div className="text-center py-28 bg-white rounded-[40px] border border-dashed border-slate-200/60 shadow-[0_20px_50px_rgba(0,0,0,0.02)] relative overflow-hidden group">
             <div className="absolute inset-0 bg-emerald-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
