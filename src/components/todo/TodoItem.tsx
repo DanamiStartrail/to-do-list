@@ -8,34 +8,29 @@ interface TodoItemProps {
 
 export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
   const formatRelativeTime = (dateString: string) => {
-    if (!dateString) return 'No date';
+    // Jika null/undefined, kembalikan string kosong atau placeholder
+    if (!dateString) return '---';
 
     const now = new Date();
-    // Memperbaiki format string: mengganti spasi dengan 'T' agar kompatibel dengan ISO 8601
-    const formattedString = dateString.includes(' ') ? dateString.replace(' ', 'T') : dateString;
-    const past = new Date(formattedString);
+    // Konversi format database "YYYY-MM-DD HH:mm:ss" ke ISO "YYYY-MM-DDTHH:mm:ss"
+    const formattedDate = dateString.replace(' ', 'T');
+    const past = new Date(formattedDate);
 
-    // Validasi jika objek Date tidak valid (NaN)
-    if (isNaN(past.getTime())) {
-      return 'Invalid format';
-    }
+    // Cek jika hasil parsing gagal (Invalid Date)
+    if (isNaN(past.getTime())) return 'Inv. Date';
 
     const diffInMs = now.getTime() - past.getTime();
     const diffInMins = Math.floor(diffInMs / 60000);
 
     if (diffInMins < 1) return 'Just now';
     if (diffInMins < 60) return `${diffInMins}m ago`;
-    if (diffInMins < 1440) {
-      const hours = Math.floor(diffInMins / 60);
-      return `${hours}h ago`;
-    }
+    if (diffInMins < 1440) return `${Math.floor(diffInMins / 60)}h ago`;
     
     return past.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
   };
 
   return (
     <div className={`group flex items-center gap-4 p-6 bg-white rounded-[28px] border border-slate-100 transition-all hover:shadow-[0_20px_50px_rgba(0,0,0,0.04)] ${todo.is_completed ? 'opacity-60 bg-slate-50/50' : ''}`}>
-      {/* Checkbox */}
       <button 
         onClick={() => onToggle(todo.id, todo.is_completed)}
         className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
@@ -49,7 +44,6 @@ export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
         )}
       </button>
 
-      {/* Task Info */}
       <div className="flex-1 min-w-0">
         <h3 className={`text-sm font-bold tracking-tight truncate ${todo.is_completed ? 'line-through text-slate-400' : 'text-slate-900'}`}>
           {todo.task}
@@ -63,7 +57,6 @@ export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
         </div>
       </div>
 
-      {/* Action: Delete */}
       <button 
         onClick={() => onDelete(todo.id)}
         className="opacity-0 group-hover:opacity-100 p-2 text-slate-300 hover:text-rose-500 transition-all"

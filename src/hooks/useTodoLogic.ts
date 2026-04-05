@@ -70,22 +70,17 @@ export const useTodoLogic = () => {
     }
   }, [todos.length])
 
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return
-    deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
-    if (outcome === 'accepted') setShowInstallBtn(false)
-    setDeferredPrompt(null)
-  }
-
   const handleAdd = async (task: string, category: string, priority: string) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+
+    // Gunakan .select() untuk mendapatkan data utuh termasuk created_at dari DB
     const { data, error } = await supabase
       .from('todos')
       .insert([{ task, category, priority, user_id: user.id }])
       .select()
-    if (!error && data) {
+
+    if (!error && data && data[0]) {
       const updated = [data[0], ...todos]
       setTodos(updated)
       localStorage.setItem('raven_todos', JSON.stringify(updated))
@@ -134,6 +129,7 @@ export const useTodoLogic = () => {
     .filter(t => filter === 'Semua' ? true : t.category === filter)
     .sort((a, b) => {
       if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1
+      // Safety conversion untuk sorting
       const dateA = a.created_at ? new Date(a.created_at.replace(' ', 'T')).getTime() : 0
       const dateB = b.created_at ? new Date(b.created_at.replace(' ', 'T')).getTime() : 0
       return dateB - dateA
@@ -147,7 +143,7 @@ export const useTodoLogic = () => {
   }
 
   return {
-    todos, filter, setFilter, loading, showInstallBtn, currentTime, 
+    filter, setFilter, loading, showInstallBtn, currentTime, 
     activeQuote, userName, filteredTodos, stats,
     handleInstallClick, handleAdd, handleToggle, handleDelete, handlePurge, handleLogout
   }
