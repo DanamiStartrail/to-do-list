@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
 import { TodoForm } from '@/components/todo/TodoForm'
@@ -23,79 +23,73 @@ export default function Home() {
   const [showInstallBtn, setShowInstallBtn] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
   const [activeQuote, setActiveQuote] = useState("")
+  const [userName, setUserName] = useState("User")
   const router = useRouter()
 
-  useEffect(() => {
-  // PAKSA ambil data terbaru setiap kali halaman dibuka/di-refresh
-  const syncData = async () => {
-    await checkUser();
-    await fetchTodos(); // Ini akan menimpa LocalStorage dengan data DB yang asli
-  };
-  
-  syncData();
-
-  // Logika PWA tetap sama
-  const handleBeforeInstallPrompt = (e: any) => {
-    e.preventDefault();
-    setDeferredPrompt(e);
-    setShowInstallBtn(true);
-  };
-  window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-  return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-}, []);
-
-  const getGreeting = () => {
-    const hour = currentTime.getHours()
-    if (hour < 12) return 'Good Morning'
-    if (hour < 17) return 'Good Afternoon'
-    return 'Good Evening'
-  }
-
-  const checkUser = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        const hasSession = Object.keys(localStorage).some(key => key.startsWith('sb-'))
-        if (!hasSession) router.push('/login')
-      }
-    } catch (error) { console.log("Offline Mode") }
-  }
-
-  const fetchTodos = async () => {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return; }
-
+  // 1. Fungsi Fetch Utama (Dibuat stabil)
+  const fetchTodos = useCallback(async (userId: string) => {
     const { data, error } = await supabase
       .from('todos')
       .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-
+      .eq('user_id', userId)
+    
     if (!error && data) {
       setTodos(data)
       localStorage.setItem('raven_todos', JSON.stringify(data))
-    } else {
-      const saved = localStorage.getItem('raven_todos')
-      if (saved) setTodos(JSON.parse(saved))
+      console.log("Sync Success:", data.length, "items")
+    } else if (error) {
+      console.error("Fetch Error:", error.message)
     }
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    checkUser()
-    fetchTodos()
-    const handleBeforeInstallPrompt = (e: any) => { e.preventDefault(); setDeferredPrompt(e); setShowInstallBtn(true); }
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
   }, [])
 
+  // 2. Single Entry Point (Inisialisasi Aplikasi)
+  useEffect(() => {
+    const initApp = async () => {
+      setLoading(true)
+      
+      // Cek Sesi
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        router.push('/login')
+        return
+      }
+
+      setUserName(user.email?.split('@')[0] || "Danta")
+      
+      // Ambil Data
+      await fetchTodos(user.id)
+      setLoading(false)
+    }
+
+    initApp()
+
+    // Timer Update
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000)
+
+    // PWA Logic
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault()
+      setDeferredPrompt(e)
+      setShowInstallBtn(true)
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    
+    return () => {
+      clearInterval(timer)
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    }
+  }, [router, fetchTodos])
+
+  // Quote Generator
   useEffect(() => {
     if (todos.length === 0) {
       setActiveQuote(TECH_QUOTES[Math.floor(Math.random() * TECH_QUOTES.length)])
     }
   }, [todos.length])
 
+  // Handler Actions
   const handleInstallClick = async () => {
     if (!deferredPrompt) return
     deferredPrompt.prompt()
@@ -107,18 +101,29 @@ export default function Home() {
   const handleAdd = async (task: string, category: string, priority: string) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const { data, error } = await supabase.from('todos').insert([{ task, category, priority, user_id: user.id }]).select()
+    
+    const { data, error } = await supabase
+      .from('todos')
+      .insert([{ task, category, priority, user_id: user.id }])
+      .select()
+
     if (!error && data) {
       const updated = [data[0], ...todos]
-      setTodos(updated); localStorage.setItem('raven_todos', JSON.stringify(updated))
+      setTodos(updated)
+      localStorage.setItem('raven_todos', JSON.stringify(updated))
     }
   }
 
   const handleToggle = async (id: string, is_completed: boolean) => {
-    const { error } = await supabase.from('todos').update({ is_completed: !is_completed }).eq('id', id)
+    const { error } = await supabase
+      .from('todos')
+      .update({ is_completed: !is_completed })
+      .eq('id', id)
+
     if (!error) {
       const updated = todos.map(t => t.id === id ? { ...t, is_completed: !is_completed } : t)
-      setTodos(updated); localStorage.setItem('raven_todos', JSON.stringify(updated))
+      setTodos(updated)
+      localStorage.setItem('raven_todos', JSON.stringify(updated))
     }
   }
 
@@ -126,7 +131,8 @@ export default function Home() {
     const { error } = await supabase.from('todos').delete().eq('id', id)
     if (!error) {
       const updated = todos.filter(t => t.id !== id)
-      setTodos(updated); localStorage.setItem('raven_todos', JSON.stringify(updated))
+      setTodos(updated)
+      localStorage.setItem('raven_todos', JSON.stringify(updated))
     }
   }
 
@@ -134,14 +140,22 @@ export default function Home() {
     const completedIds = todos.filter(t => t.is_completed).map(t => t.id)
     if (completedIds.length === 0) return
     if (!confirm(`Purge ${completedIds.length} completed tasks?`)) return
+
     const { error } = await supabase.from('todos').delete().in('id', completedIds)
     if (!error) {
       const updated = todos.filter(t => !t.is_completed)
-      setTodos(updated); localStorage.setItem('raven_todos', JSON.stringify(updated))
+      setTodos(updated)
+      localStorage.setItem('raven_todos', JSON.stringify(updated))
     }
   }
 
-  // LOGIKA SMART SORTING: Belum Selesai (Top), Sudah Selesai (Bottom)
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    localStorage.removeItem('raven_todos')
+    router.push('/login')
+  }
+
+  // Smart Sorting Logic
   const filteredTodos = todos
     .filter(t => filter === 'Semua' ? true : t.category === filter)
     .sort((a, b) => {
@@ -158,6 +172,13 @@ export default function Home() {
     done: todos.filter(t => t.is_completed).length
   }
 
+  const getGreeting = () => {
+    const hour = currentTime.getHours()
+    if (hour < 12) return 'Good Morning'
+    if (hour < 17) return 'Good Afternoon'
+    return 'Good Evening'
+  }
+
   return (
     <main className="min-h-screen bg-[#F8F9FA] py-16 px-4 relative font-sans overflow-x-hidden">
       <div className="fixed top-[-10%] right-[-10%] w-[500px] h-[500px] bg-emerald-200/20 blur-[120px] rounded-full pointer-events-none"></div>
@@ -167,7 +188,7 @@ export default function Home() {
         <div className="flex justify-between items-end mb-12 px-2">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-1">Status_Online</p>
-            <h2 className="text-4xl font-black tracking-tighter text-slate-900">{getGreeting()}, Danta</h2>
+            <h2 className="text-4xl font-black tracking-tighter text-slate-900">{getGreeting()}, {userName}</h2>
           </div>
           <div className="text-right hidden md:block">
             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 mb-1">Local_Time</p>
@@ -177,7 +198,7 @@ export default function Home() {
           </div>
         </div>
 
-        <TodoForm onAdd={handleAdd} onLogout={() => { supabase.auth.signOut(); router.push('/login'); }} />
+        <TodoForm onAdd={handleAdd} onLogout={handleLogout} />
 
         {showInstallBtn && (
           <div className="mb-8 px-2 animate-in fade-in slide-in-from-top-4 duration-700">
@@ -232,7 +253,7 @@ export default function Home() {
         {filteredTodos.length === 0 && !loading && (
           <div className="text-center py-28 bg-white rounded-[40px] border border-dashed border-slate-200/60 shadow-[0_20px_50px_rgba(0,0,0,0.02)] relative overflow-hidden group">
             <div className="absolute inset-0 bg-emerald-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-            <div className="relative z-10">
+            <div className="relative z-10 text-center">
               <p className="text-slate-300 text-[10px] font-black tracking-[0.4em] uppercase mb-4">Protocol_Idle</p>
               <h3 className="text-slate-900 font-black text-xl tracking-tighter italic">"{activeQuote}"</h3>
             </div>
