@@ -8,15 +8,17 @@ interface TodoItemProps {
 
 export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
   const formatRelativeTime = (dateString: string) => {
-    // Jika null/undefined, kembalikan string kosong atau placeholder
     if (!dateString) return '---';
 
     const now = new Date();
-    // Konversi format database "YYYY-MM-DD HH:mm:ss" ke ISO "YYYY-MM-DDTHH:mm:ss"
-    const formattedDate = dateString.replace(' ', 'T');
+    
+    // Perbaikan: Hanya ganti spasi jika string bukan format ISO murni
+    const formattedDate = dateString.includes(' ') 
+      ? dateString.replace(' ', 'T') 
+      : dateString;
+      
     const past = new Date(formattedDate);
 
-    // Cek jika hasil parsing gagal (Invalid Date)
     if (isNaN(past.getTime())) return 'Inv. Date';
 
     const diffInMs = now.getTime() - past.getTime();

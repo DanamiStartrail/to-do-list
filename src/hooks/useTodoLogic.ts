@@ -70,22 +70,43 @@ export const useTodoLogic = () => {
     }
   }, [todos.length])
 
-  const handleAdd = async (task: string, category: string, priority: string) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    // Gunakan .select() untuk mendapatkan data utuh termasuk created_at dari DB
-    const { data, error } = await supabase
-      .from('todos')
-      .insert([{ task, category, priority, user_id: user.id }])
-      .select()
-
-    if (!error && data && data[0]) {
-      const updated = [data[0], ...todos]
-      setTodos(updated)
-      localStorage.setItem('raven_todos', JSON.stringify(updated))
-    }
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return
+    deferredPrompt.prompt()
+    const { outcome } = await deferredPrompt.userChoice
+    if (outcome === 'accepted') setShowInstallBtn(false)
+    setDeferredPrompt(null)
   }
+
+  const handleAdd = async (task: string, category: string, priority: string) => {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    console.error("User session not found");
+    return
+  }
+
+  // JANGAN masukkan created_at secara manual di sini jika database sudah punya default value
+  const { data, error } = await supabase
+    .from('todos')
+    .insert([{ 
+      task, 
+      category, 
+      priority, 
+      user_id: user.id 
+    }])
+    .select() // Mengambil data yang baru saja dibuat (termasuk created_at dari server)
+
+  if (error) {
+    console.error("Insert Error:", error.message);
+    return;
+  }
+
+  if (data && data[0]) {
+    const updated = [data[0], ...todos]
+    setTodos(updated)
+    localStorage.setItem('raven_todos', JSON.stringify(updated))
+  }
+}
 
   const handleToggle = async (id: string, is_completed: boolean) => {
     const { error } = await supabase
@@ -129,7 +150,8 @@ export const useTodoLogic = () => {
     .filter(t => filter === 'Semua' ? true : t.category === filter)
     .sort((a, b) => {
       if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1
-      // Safety conversion untuk sorting
+      
+      // Parsing aman untuk sorting
       const dateA = a.created_at ? new Date(a.created_at.replace(' ', 'T')).getTime() : 0
       const dateB = b.created_at ? new Date(b.created_at.replace(' ', 'T')).getTime() : 0
       return dateB - dateA
