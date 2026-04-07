@@ -146,14 +146,15 @@ export const useTodoLogic = () => {
     router.push('/login')
   }
 
+  // Cari bagian sort di useTodoLogic.ts
   const filteredTodos = todos
     .filter(t => filter === 'Semua' ? true : t.category === filter)
     .sort((a, b) => {
       if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1
       
-      // Parsing aman untuk sorting
-      const dateA = a.inserted_at ? new Date(a.inserted_at.replace(' ', 'T')).getTime() : 0
-      const dateB = b.inserted_at ? new Date(b.inserted_at.replace(' ', 'T')).getTime() : 0
+      // GANTI created_at MENJADI inserted_at
+      const dateA = a.inserted_at ? new Date(a.inserted_at).getTime() : 0
+      const dateB = b.inserted_at ? new Date(b.inserted_at).getTime() : 0
       return dateB - dateA
     })
 
