@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -12,15 +12,30 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Update Metadata untuk identitas aplikasi di HP
 export const metadata: Metadata = {
   title: "Raven List",
   description: "Platinum Productivity System",
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.ico",
-    apple: "/icon-512.png", // Pakai file yang ada di folder public kamu
+    apple: "/icon-512.png",
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Raven List",
+  },
+};
+
+// Viewport dipisah di Next.js 15 untuk kontrol theme-color yang lebih baik
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F8F9FA" },
+    { media: "(prefers-color-scheme: dark)", color: "#020617" },
+  ],
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -29,16 +44,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <head>
-        {/* Meta tags tambahan agar status bar HP berwarna Hijau Neon */}
-        <meta name="theme-color" content="#00ff41" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <link rel="apple-touch-icon" href="/icon-192.png" />
-      </head>
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#0a0f14]`}
+        className={`
+          ${geistSans.variable} 
+          ${geistMono.variable} 
+          antialiased 
+          min-h-screen 
+          selection:bg-emerald-500/30
+        `}
       >
         {children}
       </body>
