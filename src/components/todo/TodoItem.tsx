@@ -54,7 +54,7 @@ export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
           <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">{todo.category}</p>
           <span className="w-1 h-1 rounded-full bg-slate-200"></span>
           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-            {formatRelativeTime(todo.created_at)}
+            {formatRelativeTime(todo.inserted_at)}
           </p>
         </div>
       </div>
