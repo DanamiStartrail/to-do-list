@@ -85,7 +85,7 @@ export const useTodoLogic = () => {
     return
   }
 
-  // JANGAN masukkan created_at secara manual di sini jika database sudah punya default value
+  // JANGAN masukkan inserted_at secara manual di sini jika database sudah punya default value
   const { data, error } = await supabase
     .from('todos')
     .insert([{ 
@@ -94,7 +94,7 @@ export const useTodoLogic = () => {
       priority, 
       user_id: user.id 
     }])
-    .select() // Mengambil data yang baru saja dibuat (termasuk created_at dari server)
+    .select() // Mengambil data yang baru saja dibuat (termasuk inserted_at dari server)
 
   if (error) {
     console.error("Insert Error:", error.message);
@@ -152,8 +152,8 @@ export const useTodoLogic = () => {
       if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1
       
       // Parsing aman untuk sorting
-      const dateA = a.created_at ? new Date(a.created_at.replace(' ', 'T')).getTime() : 0
-      const dateB = b.created_at ? new Date(b.created_at.replace(' ', 'T')).getTime() : 0
+      const dateA = a.inserted_at ? new Date(a.inserted_at.replace(' ', 'T')).getTime() : 0
+      const dateB = b.inserted_at ? new Date(b.inserted_at.replace(' ', 'T')).getTime() : 0
       return dateB - dateA
     })
 
