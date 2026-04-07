@@ -80,13 +80,14 @@ export const useTodoLogic = () => {
     }
   }, []);
 
-  const toggleDarkMode = () => {
+    const toggleDarkMode = () => {
+    const root = window.document.documentElement;
     if (isDark) {
-      document.documentElement.classList.remove('dark');
+      root.classList.remove('dark');
       localStorage.setItem('theme', 'light');
       setIsDark(false);
     } else {
-      document.documentElement.classList.add('dark');
+      root.classList.add('dark');
       localStorage.setItem('theme', 'dark');
       setIsDark(true);
     }
