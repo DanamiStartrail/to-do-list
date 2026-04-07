@@ -44,7 +44,7 @@ export const useTodoLogic = () => {
         router.push('/login')
         return
       }
-      setUserName(user.email?.split('@')[0] || "Danta")
+      setUserName("Danta" ||user.email?.split('@')[0])
       await fetchTodos(user.id)
       setLoading(false)
     }

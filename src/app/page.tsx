@@ -25,11 +25,11 @@ export default function Home() {
         {/* Header Section */}
         <div className="flex justify-between items-end mb-12 px-2">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-1">Status_Online</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-1">Status Online</p>
             <h2 className="text-4xl font-black tracking-tighter text-slate-900">{getGreeting()}, {userName}</h2>
           </div>
           <div className="text-right hidden md:block">
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 mb-1">Local_Time</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 mb-1">Local Time</p>
             <p className="text-2xl font-black tracking-tighter text-slate-900">
               {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
             </p>

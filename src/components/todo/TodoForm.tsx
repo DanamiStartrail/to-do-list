@@ -30,7 +30,7 @@ export const TodoForm = ({ onAdd, onLogout }: TodoFormProps) => {
       <div className="flex justify-between items-center mb-10 px-2">
         <div>
           <h1 className="text-4xl font-black tracking-tighter text-slate-900">
-            Raven<span className="text-emerald-500">.</span>
+            Raven<span className="text-emerald-500"></span>
           </h1>
           <p className="text-[10px] font-bold tracking-[0.4em] text-slate-300 uppercase mt-1">
             Task Management System

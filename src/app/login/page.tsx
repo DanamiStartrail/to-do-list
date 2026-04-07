@@ -37,7 +37,7 @@ export default function LoginPage() {
         {/* Brand Identity */}
         <div className="text-center mb-12">
           <h1 className="text-5xl font-black tracking-tighter text-slate-900 mb-2">
-            Raven<span className="text-emerald-500">.</span>
+            Raven<span className="text-emerald-500"></span>
           </h1>
           <p className="text-[10px] font-bold tracking-[0.5em] text-slate-400 uppercase">
             Productivity System v3
