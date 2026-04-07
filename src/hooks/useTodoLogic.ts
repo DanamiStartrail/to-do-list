@@ -23,6 +23,7 @@ export const useTodoLogic = () => {
   const [activeQuote, setActiveQuote] = useState("")
   const [userName, setUserName] = useState("User")
   const router = useRouter()
+  const [isDark, setIsDark] = useState(false);
 
   const fetchTodos = useCallback(async (userId: string) => {
     const { data, error } = await supabase
@@ -44,7 +45,7 @@ export const useTodoLogic = () => {
         router.push('/login')
         return
       }
-      setUserName("Danta" ||user.email?.split('@')[0])
+      setUserName("Danta")
       await fetchTodos(user.id)
       setLoading(false)
     }
@@ -70,6 +71,28 @@ export const useTodoLogic = () => {
     }
   }, [todos.length])
 
+  useEffect(() => {
+    // Cek tema saat pertama kali load
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      setIsDark(true);
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    if (isDark) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      setIsDark(false);
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      setIsDark(true);
+    }
+  };
+
+// Jangan lupa masukkan isDark dan toggleDarkMode ke dalam return { ... }
   const handleInstallClick = async () => {
     if (!deferredPrompt) return
     deferredPrompt.prompt()
@@ -167,7 +190,7 @@ export const useTodoLogic = () => {
 
   return {
     filter, setFilter, loading, showInstallBtn, currentTime, 
-    activeQuote, userName, filteredTodos, stats,
+    activeQuote, userName, filteredTodos, stats, isDark, toggleDarkMode,
     handleInstallClick, handleAdd, handleToggle, handleDelete, handlePurge, handleLogout
   }
 }

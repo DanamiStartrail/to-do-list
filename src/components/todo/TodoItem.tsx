@@ -25,12 +25,13 @@ export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
 
   return (
     <div className={`group flex items-center gap-4 p-6 bg-white dark:bg-slate-900 rounded-[28px] border border-slate-100 dark:border-slate-800 transition-all hover:shadow-[0_20px_50px_rgba(0,0,0,0.04)] dark:hover:shadow-[0_20px_50px_rgba(0,0,0,0.2)] ${todo.is_completed ? 'opacity-60 bg-slate-50/50 dark:bg-slate-900/50' : ''}`}>
+      {/* Checkbox */}
       <button 
         onClick={() => onToggle(todo.id, todo.is_completed)}
         className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
           todo.is_completed 
           ? 'bg-emerald-500 border-emerald-500 text-white' 
-          : 'border-slate-200 dark:border-slate-700 hover:border-emerald-400'
+          : 'border-slate-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-500'
         }`}
       >
         {todo.is_completed && (
@@ -38,6 +39,7 @@ export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
         )}
       </button>
 
+      {/* Task Info */}
       <div className="flex-1 min-w-0">
         <h3 className={`text-sm font-bold tracking-tight truncate ${todo.is_completed ? 'line-through text-slate-400 dark:text-slate-600' : 'text-slate-900 dark:text-slate-100'}`}>
           {todo.task}
@@ -51,6 +53,7 @@ export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
         </div>
       </div>
 
+      {/* Action: Delete */}
       <button 
         onClick={() => onDelete(todo.id)}
         className="opacity-0 group-hover:opacity-100 p-2 text-slate-300 dark:text-slate-700 hover:text-rose-500 transition-all"
