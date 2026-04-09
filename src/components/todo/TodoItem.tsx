@@ -41,15 +41,31 @@ export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
 
       {/* Task Info */}
       <div className="flex-1 min-w-0">
-        <h3 className={`text-sm font-bold tracking-tight truncate ${todo.is_completed ? 'line-through text-slate-400' : 'text-slate-900'}`}>
-          {todo.task}
-        </h3>
+        <div className="flex items-center gap-2 mb-0.5">
+          <h3 className={`text-sm font-bold tracking-tight truncate ${todo.is_completed ? 'line-through text-slate-400' : 'text-slate-900'}`}>
+            {todo.task}
+          </h3>
+          {/* Label Daily (BARU) */}
+          {todo.is_daily && (
+            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase tracking-tighter rounded-md border border-emerald-100">
+              Daily
+            </span>
+          )}
+        </div>
+        
         <div className="flex items-center gap-3">
           <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">{todo.category}</p>
           <span className="w-1 h-1 rounded-full bg-slate-200"></span>
           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
             {formatRelativeTime(todo.inserted_at)}
           </p>
+          {/* Indikator Prioritas (Optional: Menambah visual jika High) */}
+          {todo.priority === 'High' && (
+            <>
+              <span className="w-1 h-1 rounded-full bg-rose-200"></span>
+              <p className="text-[9px] font-bold text-rose-500 uppercase tracking-widest">Urgent</p>
+            </>
+          )}
         </div>
       </div>
 
