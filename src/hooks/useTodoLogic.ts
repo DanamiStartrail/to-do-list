@@ -117,32 +117,29 @@ export const useTodoLogic = () => {
   }
 
   // --- UPDATE HANDLEADD (DITAMBAH PARAMETER isDaily) ---
-  const handleAdd = async (task: string, category: string, priority: string, isDaily: boolean = false) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+  // Update parameter handleAdd
+const handleAdd = async (task: string, category: string, priority: string, isDaily: boolean, deadline: string | null) => {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
 
-    const { data, error } = await supabase
-      .from('todos')
-      .insert([{ 
-        task, 
-        category, 
-        priority, 
-        user_id: user.id,
-        is_daily: isDaily // BARU
-      }])
-      .select()
+  const { data, error } = await supabase
+    .from('todos')
+    .insert([{ 
+      task, 
+      category, 
+      priority, 
+      user_id: user.id,
+      is_daily: isDaily,
+      deadline: deadline // Masukkan ke database
+    }])
+    .select()
 
-    if (error) {
-      console.error("Insert Error:", error.message);
-      return;
-    }
-
-    if (data && data[0]) {
-      const updated = [data[0], ...todos]
-      setTodos(updated)
-      localStorage.setItem('raven_todos', JSON.stringify(updated))
-    }
+  if (!error && data) {
+    const updated = [data[0], ...todos]
+    setTodos(updated)
+    localStorage.setItem('raven_todos', JSON.stringify(updated))
   }
+}
 
   const handleToggle = async (id: string, is_completed: boolean) => {
     const { error } = await supabase
