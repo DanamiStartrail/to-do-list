@@ -1,13 +1,17 @@
 'use client'
+import { useState } from 'react'
 
 interface TodoItemProps {
   todo: any;
   onToggle: (id: string, is_completed: boolean) => void;
   onDelete: (id: string) => void;
+  onUpdateDeadline: (id: string, newDeadline: string) => void; // Prop baru untuk edit
 }
 
-export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
-  // Logika format waktu tetap menggunakan versi kamu yang lebih aman
+export const TodoItem = ({ todo, onToggle, onDelete, onUpdateDeadline }: TodoItemProps) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempDeadline, setTempDeadline] = useState(todo.deadline || '');
+
   const formatRelativeTime = (dateString: string) => {
     if (!dateString) return '---';
     const now = new Date();
@@ -24,7 +28,6 @@ export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
     return past.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
   };
 
-  // Logika pembantu untuk status Deadline
   const getDeadlineStatus = (deadlineStr: string | null) => {
     if (!deadlineStr) return null;
     const target = new Date(deadlineStr);
@@ -34,10 +37,8 @@ export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
     const diffInHrs = Math.floor(diffInMs / (1000 * 60 * 60));
     const diffInDays = Math.floor(diffInHrs / 24);
 
-    // Jika sudah lewat (Overdue)
     if (diffInMs < 0) return { label: 'Overdue', color: 'text-rose-500 bg-rose-50 border-rose-100' };
-
-    // Jika kurang dari 24 jam (Tampilkan Jam)
+    
     if (diffInHrs < 24) {
       if (diffInHrs < 1) {
         const mins = Math.floor(diffInMs / 60000);
@@ -45,19 +46,22 @@ export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
       }
       return { label: `${diffInHrs}h left`, color: 'text-amber-500 bg-amber-50 border-amber-100' };
     }
-
-    // Jika lebih dari 1 hari
     return { label: `${diffInDays}d left`, color: 'text-slate-400 bg-slate-50 border-slate-100' };
   };
 
-  const deadline = getDeadlineStatus(todo.deadline);
+  const deadlineStatus = getDeadlineStatus(todo.deadline);
+
+  const handleSave = () => {
+    onUpdateDeadline(todo.id, tempDeadline);
+    setIsEditing(false);
+  };
 
   return (
     <div className={`group flex items-center gap-4 p-6 bg-white rounded-[28px] border border-slate-100 transition-all hover:shadow-[0_20px_50px_rgba(0,0,0,0.04)] ${todo.is_completed ? 'opacity-60 bg-slate-50/50' : ''}`}>
       {/* Checkbox */}
       <button 
         onClick={() => onToggle(todo.id, todo.is_completed)}
-        className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
+        className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
           todo.is_completed 
           ? 'bg-emerald-500 border-emerald-500 text-white' 
           : 'border-slate-200 hover:border-emerald-400'
@@ -70,30 +74,46 @@ export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
 
       {/* Task Info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
           <h3 className={`text-sm font-bold tracking-tight truncate ${todo.is_completed ? 'line-through text-slate-400' : 'text-slate-900'}`}>
             {todo.task}
           </h3>
           
-          {/* Label Daily */}
           {todo.is_daily && (
             <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase tracking-tighter rounded-md border border-emerald-100">
               Daily
             </span>
           )}
 
-          {/* Label Deadline (Updated: Akan menampilkan "...h left" jika < 24 jam) */}
-          {deadline && !todo.is_completed && (
-            <span className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter rounded-md border ${deadline.color}`}>
-              {deadline.label}
-            </span>
+          {/* Edit Deadline Logic */}
+          {!todo.is_completed && (
+            isEditing ? (
+              <div className="flex items-center gap-2 animate-in fade-in zoom-in duration-200">
+                <input 
+                  type="datetime-local"
+                  value={tempDeadline}
+                  onChange={(e) => setTempDeadline(e.target.value)}
+                  className="text-[9px] font-black bg-slate-50 border border-emerald-200 px-2 py-1 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500/10"
+                />
+                <button onClick={handleSave} className="text-[9px] font-bold text-emerald-600 hover:text-emerald-800 uppercase">Save</button>
+                <button onClick={() => setIsEditing(false)} className="text-[9px] font-bold text-slate-300 hover:text-slate-500 uppercase">Cancel</button>
+              </div>
+            ) : (
+              todo.deadline && (
+                <button 
+                  onClick={() => setIsEditing(true)}
+                  className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter rounded-md border transition-all hover:scale-105 active:scale-95 ${deadlineStatus?.color}`}
+                >
+                  {deadlineStatus?.label}
+                </button>
+              )
+            )
           )}
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
           <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">{todo.category}</p>
           
-          {/* Tampilkan Jam Deadline Spesifik (TAMBAHKAN DI SINI) */}
           {todo.deadline && (
             <>
               <span className="w-1 h-1 rounded-full bg-slate-200"></span>
@@ -108,7 +128,6 @@ export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
             {formatRelativeTime(todo.inserted_at)}
           </p>
           
-          {/* Indikator Prioritas */}
           {todo.priority === 'High' && (
             <>
               <span className="w-1 h-1 rounded-full bg-rose-200"></span>
@@ -121,7 +140,7 @@ export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
       {/* Action: Delete */}
       <button 
         onClick={() => onDelete(todo.id)}
-        className="opacity-0 group-hover:opacity-100 p-2 text-slate-300 hover:text-rose-500 transition-all"
+        className="opacity-0 group-hover:opacity-100 p-2 text-slate-300 hover:text-rose-500 transition-all shrink-0"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
       </button>
