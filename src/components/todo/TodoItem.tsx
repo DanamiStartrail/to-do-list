@@ -82,7 +82,7 @@ export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
             </span>
           )}
 
-          {/* Label Deadline (BARU) */}
+          {/* Label Deadline (Updated: Akan menampilkan "...h left" jika < 24 jam) */}
           {deadline && !todo.is_completed && (
             <span className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter rounded-md border ${deadline.color}`}>
               {deadline.label}
@@ -90,8 +90,19 @@ export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
           )}
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">{todo.category}</p>
+          
+          {/* Tampilkan Jam Deadline Spesifik (TAMBAHKAN DI SINI) */}
+          {todo.deadline && (
+            <>
+              <span className="w-1 h-1 rounded-full bg-slate-200"></span>
+              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+                Due: {new Date(todo.deadline).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false })}
+              </p>
+            </>
+          )}
+
           <span className="w-1 h-1 rounded-full bg-slate-200"></span>
           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
             {formatRelativeTime(todo.inserted_at)}
