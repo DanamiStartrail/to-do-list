@@ -28,17 +28,26 @@ export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
   const getDeadlineStatus = (deadlineStr: string | null) => {
     if (!deadlineStr) return null;
     const target = new Date(deadlineStr);
-    target.setHours(0, 0, 0, 0);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
     
-    const diffTime = target.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffInMs = target.getTime() - now.getTime();
+    const diffInHrs = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInHrs / 24);
 
-    if (diffDays < 0) return { label: 'Overdue', color: 'text-rose-500 bg-rose-50 border-rose-100' };
-    if (diffDays === 0) return { label: 'Today', color: 'text-amber-500 bg-amber-50 border-amber-100' };
-    if (diffDays === 1) return { label: 'Tomorrow', color: 'text-emerald-600 bg-emerald-50 border-emerald-100' };
-    return { label: `${diffDays} days left`, color: 'text-slate-400 bg-slate-50 border-slate-100' };
+    // Jika sudah lewat (Overdue)
+    if (diffInMs < 0) return { label: 'Overdue', color: 'text-rose-500 bg-rose-50 border-rose-100' };
+
+    // Jika kurang dari 24 jam (Tampilkan Jam)
+    if (diffInHrs < 24) {
+      if (diffInHrs < 1) {
+        const mins = Math.floor(diffInMs / 60000);
+        return { label: `${mins}m left`, color: 'text-rose-600 bg-rose-50 border-rose-200 animate-pulse' };
+      }
+      return { label: `${diffInHrs}h left`, color: 'text-amber-500 bg-amber-50 border-amber-100' };
+    }
+
+    // Jika lebih dari 1 hari
+    return { label: `${diffInDays}d left`, color: 'text-slate-400 bg-slate-50 border-slate-100' };
   };
 
   const deadline = getDeadlineStatus(todo.deadline);
