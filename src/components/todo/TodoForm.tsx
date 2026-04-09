@@ -92,7 +92,7 @@ export const TodoForm = ({ onAdd, onLogout }: TodoFormProps) => {
               </button>
 
               <input 
-                type="date"
+                type="datetime-local"
                 value={deadline}
                 onChange={(e) => setDeadline(e.target.value)}
                 className="text-[9px] font-black uppercase bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl text-slate-500 outline-none focus:border-emerald-500 transition-all cursor-pointer"
