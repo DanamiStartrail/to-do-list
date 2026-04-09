@@ -7,6 +7,7 @@ interface TodoItemProps {
 }
 
 export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
+  // Logika format waktu tetap menggunakan versi kamu yang lebih aman
   const formatRelativeTime = (dateString: string) => {
     if (!dateString) return '---';
     const now = new Date();
@@ -22,6 +23,25 @@ export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
     if (diffInMins < 1440) return `${Math.floor(diffInMins / 60)}h ago`;
     return past.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
   };
+
+  // Logika pembantu untuk status Deadline
+  const getDeadlineStatus = (deadlineStr: string | null) => {
+    if (!deadlineStr) return null;
+    const target = new Date(deadlineStr);
+    target.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const diffTime = target.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) return { label: 'Overdue', color: 'text-rose-500 bg-rose-50 border-rose-100' };
+    if (diffDays === 0) return { label: 'Today', color: 'text-amber-500 bg-amber-50 border-amber-100' };
+    if (diffDays === 1) return { label: 'Tomorrow', color: 'text-emerald-600 bg-emerald-50 border-emerald-100' };
+    return { label: `${diffDays} days left`, color: 'text-slate-400 bg-slate-50 border-slate-100' };
+  };
+
+  const deadline = getDeadlineStatus(todo.deadline);
 
   return (
     <div className={`group flex items-center gap-4 p-6 bg-white rounded-[28px] border border-slate-100 transition-all hover:shadow-[0_20px_50px_rgba(0,0,0,0.04)] ${todo.is_completed ? 'opacity-60 bg-slate-50/50' : ''}`}>
@@ -45,10 +65,18 @@ export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
           <h3 className={`text-sm font-bold tracking-tight truncate ${todo.is_completed ? 'line-through text-slate-400' : 'text-slate-900'}`}>
             {todo.task}
           </h3>
-          {/* Label Daily (BARU) */}
+          
+          {/* Label Daily */}
           {todo.is_daily && (
             <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase tracking-tighter rounded-md border border-emerald-100">
               Daily
+            </span>
+          )}
+
+          {/* Label Deadline (BARU) */}
+          {deadline && !todo.is_completed && (
+            <span className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter rounded-md border ${deadline.color}`}>
+              {deadline.label}
             </span>
           )}
         </div>
@@ -59,7 +87,8 @@ export const TodoItem = ({ todo, onToggle, onDelete }: TodoItemProps) => {
           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
             {formatRelativeTime(todo.inserted_at)}
           </p>
-          {/* Indikator Prioritas (Optional: Menambah visual jika High) */}
+          
+          {/* Indikator Prioritas */}
           {todo.priority === 'High' && (
             <>
               <span className="w-1 h-1 rounded-full bg-rose-200"></span>
