@@ -24,6 +24,35 @@ export const useTodoLogic = () => {
   const [userName, setUserName] = useState("User")
   const router = useRouter()
 
+  // --- FUNGSI RESET DAILY (BARU) ---
+  const checkAndResetDaily = useCallback(async (currentTodos: any[]) => {
+    const today = new Date().toLocaleDateString('id-ID');
+    const lastReset = localStorage.getItem('raven_last_reset');
+
+    // Jika hari ini berbeda dengan hari terakhir reset tersimpan
+    if (lastReset !== today) {
+      const dailyIds = currentTodos
+        .filter(t => t.is_daily && t.is_completed)
+        .map(t => t.id);
+
+      if (dailyIds.length > 0) {
+        const { error } = await supabase
+          .from('todos')
+          .update({ is_completed: false })
+          .in('id', dailyIds);
+
+        if (!error) {
+          localStorage.setItem('raven_last_reset', today);
+          return true; // Menandakan ada perubahan
+        }
+      } else {
+        // Tetap simpan tanggal hari ini meskipun tidak ada task harian yang perlu direset
+        localStorage.setItem('raven_last_reset', today);
+      }
+    }
+    return false;
+  }, []);
+
   const fetchTodos = useCallback(async (userId: string) => {
     const { data, error } = await supabase
       .from('todos')
@@ -31,10 +60,19 @@ export const useTodoLogic = () => {
       .eq('user_id', userId)
     
     if (!error && data) {
-      setTodos(data)
-      localStorage.setItem('raven_todos', JSON.stringify(data))
+      // Jalankan pengecekan reset tepat setelah data diambil
+      const hasReset = await checkAndResetDaily(data);
+      if (hasReset) {
+        // Jika ada yang direset, ambil data ulang atau update lokal
+        const updatedData = data.map(t => t.is_daily ? { ...t, is_completed: false } : t);
+        setTodos(updatedData);
+        localStorage.setItem('raven_todos', JSON.stringify(updatedData));
+      } else {
+        setTodos(data);
+        localStorage.setItem('raven_todos', JSON.stringify(data));
+      }
     }
-  }, [])
+  }, [checkAndResetDaily]);
 
   useEffect(() => {
     const initApp = async () => {
@@ -70,7 +108,6 @@ export const useTodoLogic = () => {
     }
   }, [todos.length])
 
-// Jangan lupa masukkan isDark dan toggleDarkMode ke dalam return { ... }
   const handleInstallClick = async () => {
     if (!deferredPrompt) return
     deferredPrompt.prompt()
@@ -79,35 +116,33 @@ export const useTodoLogic = () => {
     setDeferredPrompt(null)
   }
 
-  const handleAdd = async (task: string, category: string, priority: string) => {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    console.error("User session not found");
-    return
-  }
+  // --- UPDATE HANDLEADD (DITAMBAH PARAMETER isDaily) ---
+  const handleAdd = async (task: string, category: string, priority: string, isDaily: boolean = false) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
 
-  // JANGAN masukkan inserted_at secara manual di sini jika database sudah punya default value
-  const { data, error } = await supabase
-    .from('todos')
-    .insert([{ 
-      task, 
-      category, 
-      priority, 
-      user_id: user.id 
-    }])
-    .select() // Mengambil data yang baru saja dibuat (termasuk inserted_at dari server)
+    const { data, error } = await supabase
+      .from('todos')
+      .insert([{ 
+        task, 
+        category, 
+        priority, 
+        user_id: user.id,
+        is_daily: isDaily // BARU
+      }])
+      .select()
 
-  if (error) {
-    console.error("Insert Error:", error.message);
-    return;
-  }
+    if (error) {
+      console.error("Insert Error:", error.message);
+      return;
+    }
 
-  if (data && data[0]) {
-    const updated = [data[0], ...todos]
-    setTodos(updated)
-    localStorage.setItem('raven_todos', JSON.stringify(updated))
+    if (data && data[0]) {
+      const updated = [data[0], ...todos]
+      setTodos(updated)
+      localStorage.setItem('raven_todos', JSON.stringify(updated))
+    }
   }
-}
 
   const handleToggle = async (id: string, is_completed: boolean) => {
     const { error } = await supabase
@@ -131,11 +166,11 @@ export const useTodoLogic = () => {
   }
 
   const handlePurge = async () => {
-    const completedIds = todos.filter(t => t.is_completed).map(t => t.id)
+    const completedIds = todos.filter(t => t.is_completed && !t.is_daily).map(t => t.id) // Daily tidak ikut di-purge
     if (completedIds.length === 0 || !confirm(`Purge ${completedIds.length} tasks?`)) return
     const { error } = await supabase.from('todos').delete().in('id', completedIds)
     if (!error) {
-      const updated = todos.filter(t => !t.is_completed)
+      const updated = todos.filter(t => !completedIds.includes(t.id))
       setTodos(updated)
       localStorage.setItem('raven_todos', JSON.stringify(updated))
     }
@@ -144,16 +179,18 @@ export const useTodoLogic = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut()
     localStorage.removeItem('raven_todos')
+    localStorage.removeItem('raven_last_reset') // BARU
     router.push('/login')
   }
 
-  // Cari bagian sort di useTodoLogic.ts
   const filteredTodos = todos
-    .filter(t => filter === 'Semua' ? true : t.category === filter)
+    .filter(t => {
+      if (filter === 'Semua') return true;
+      if (filter === 'Daily') return t.is_daily === true; // BARU
+      return t.category === filter;
+    })
     .sort((a, b) => {
       if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1
-      
-      // GANTI created_at MENJADI inserted_at
       const dateA = a.inserted_at ? new Date(a.inserted_at).getTime() : 0
       const dateB = b.inserted_at ? new Date(b.inserted_at).getTime() : 0
       return dateB - dateA
