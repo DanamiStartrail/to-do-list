@@ -180,6 +180,19 @@ const handleAdd = async (task: string, category: string, priority: string, isDai
     router.push('/login')
   }
 
+  const handleUpdateDeadline = async (id: string, newDeadline: string) => {
+    const { error } = await supabase
+      .from('todos')
+      .update({ deadline: newDeadline })
+      .eq('id', id);
+
+    if (!error) {
+      const updated = todos.map(t => t.id === id ? { ...t, deadline: newDeadline } : t);
+      setTodos(updated);
+      localStorage.setItem('raven_todos', JSON.stringify(updated));
+    }
+  };
+
   const filteredTodos = todos
     .filter(t => {
       if (filter === 'Semua') return true;
@@ -203,6 +216,7 @@ const handleAdd = async (task: string, category: string, priority: string, isDai
   return {
     filter, setFilter, loading, showInstallBtn, currentTime, 
     activeQuote, userName, filteredTodos, stats,
-    handleInstallClick, handleAdd, handleToggle, handleDelete, handlePurge, handleLogout
+    handleInstallClick, handleAdd, handleToggle, handleDelete, handlePurge, handleLogout, 
+    handleUpdateDeadline
   }
 }
