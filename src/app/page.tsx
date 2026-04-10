@@ -7,7 +7,8 @@ export default function Home() {
   const {
     filter, setFilter, loading, showInstallBtn, currentTime, 
     activeQuote, userName, filteredTodos, stats,
-    handleInstallClick, handleAdd, handleToggle, handleDelete, handlePurge, handleLogout
+    handleInstallClick, handleAdd, handleToggle, handleDelete, handlePurge, handleLogout,
+    handleUpdateDeadline
   } = useTodoLogic();
 
   const getGreeting = () => {
@@ -90,9 +91,16 @@ export default function Home() {
         </div>
 
         {/* Todo List */}
+        // Di dalam return page.tsx (sekitar baris 95)
         <div className="space-y-4 px-2">
           {filteredTodos.map(todo => (
-            <TodoItem key={todo.id} todo={todo} onToggle={handleToggle} onDelete={handleDelete} />
+            <TodoItem 
+              key={todo.id} 
+              todo={todo} 
+              onToggle={handleToggle} 
+              onDelete={handleDelete} 
+              onUpdateDeadline={handleUpdateDeadline} // TAMBAHKAN INI
+            />
           ))}
         </div>
 
