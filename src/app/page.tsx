@@ -91,7 +91,6 @@ export default function Home() {
         </div>
 
         {/* Todo List */}
-        // Di dalam return page.tsx (sekitar baris 95)
         <div className="space-y-4 px-2">
           {filteredTodos.map(todo => (
             <TodoItem 

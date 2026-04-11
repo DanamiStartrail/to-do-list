@@ -23,6 +23,8 @@ export const useTodoLogic = () => {
   const [activeQuote, setActiveQuote] = useState("")
   const [userName, setUserName] = useState("User")
   const router = useRouter()
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // --- FUNGSI RESET DAILY (BARU) ---
   const checkAndResetDaily = useCallback(async (currentTodos: any[]) => {
@@ -52,6 +54,9 @@ export const useTodoLogic = () => {
     }
     return false;
   }, []);
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const toggleModal = () => setIsModalOpen(!isModalOpen);
 
   const fetchTodos = useCallback(async (userId: string) => {
     const { data, error } = await supabase
@@ -214,9 +219,9 @@ const handleAdd = async (task: string, category: string, priority: string, isDai
   }
 
   return {
-    filter, setFilter, loading, showInstallBtn, currentTime, 
-    activeQuote, userName, filteredTodos, stats,
-    handleInstallClick, handleAdd, handleToggle, handleDelete, handlePurge, handleLogout, 
-    handleUpdateDeadline
+    filter, setFilter, loading, showInstallBtn, currentTime, isModalOpen,
+    activeQuote, userName, filteredTodos, stats,isSidebarOpen, setIsSidebarOpen,
+    setIsModalOpen,toggleSidebar, toggleModal,handleInstallClick, handleAdd, 
+    handleToggle, handleDelete, handlePurge, handleLogout, handleUpdateDeadline
   }
 }
