@@ -132,19 +132,19 @@ export default function Home() {
 
           {/* Stats Grid - Tighter padding & font */}
           {/* Stats Area Baru - Lebih Compact & Modern */}
-<div className="flex gap-3 mb-8 px-2 overflow-x-auto scrollbar-hide py-1">
-  {[
-    { label: 'Pending', value: stats.pending, icon: 'M12 8v4l3 3' },
-    { label: 'Urgent', value: stats.urgent, color: 'text-rose-600 bg-rose-50 border-rose-100' },
-    { label: 'ITERA', value: stats.itera, color: 'text-emerald-600 bg-emerald-50 border-emerald-100' },
-    { label: 'Done', value: stats.done, color: 'text-slate-500 bg-slate-50 border-slate-100' }
-  ].map((stat, i) => (
-    <div key={i} className={`flex items-center gap-2.5 px-4 py-2 rounded-full border whitespace-nowrap shadow-sm ${stat.color || 'bg-white border-slate-100 text-slate-900'}`}>
-      <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{stat.label}</span>
-      <span className="text-sm font-black tracking-tighter">{stat.value}</span>
-    </div>
-  ))}
-</div>
+          <div className="flex gap-3 mb-8 px-2 overflow-x-auto scrollbar-hide py-1">
+            {[
+              { label: 'Pending', value: stats.pending, icon: 'M12 8v4l3 3' },
+              { label: 'Urgent', value: stats.urgent, color: 'text-rose-600 bg-rose-50 border-rose-100' },
+              { label: 'ITERA', value: stats.itera, color: 'text-emerald-600 bg-emerald-50 border-emerald-100' },
+              { label: 'Done', value: stats.done, color: 'text-slate-500 bg-slate-50 border-slate-100' }
+            ].map((stat, i) => (
+              <div key={i} className={`flex items-center gap-2.5 px-4 py-2 rounded-full border whitespace-nowrap shadow-sm ${stat.color || 'bg-white border-slate-100 text-slate-900'}`}>
+                <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{stat.label}</span>
+                <span className="text-sm font-black tracking-tighter">{stat.value}</span>
+              </div>
+            ))}
+          </div>
 
           {/* List Header - Compact */}
           <div className="flex items-center justify-between mb-6 px-4">

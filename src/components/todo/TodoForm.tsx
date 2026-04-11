@@ -36,7 +36,8 @@ export const TodoForm = ({ isOpen, onClose, onAdd }: TodoFormProps) => {
 
 
       {/* Box Modal (Isi Form) */}
-      <div className="relative w-full max-w-xl bg-white border border-slate-100 p-6 md:p-8 rounded-[40px] shadow-[0_30px_100px_rgba(0,0,0,0.15)] animate-in fade-in zoom-in duration-300">
+      <div className="relative w-full max-w-xl bg-white border border-slate-100 p-6 md:p-8 rounded-[32px] shadow-[0_30px_100px_rgba(0,0,0,0.15)] 
+  animate-in fade-in zoom-in-95 slide-in-from-bottom-10 duration-500 ease-out">
         
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-xl font-black tracking-tight text-slate-900 uppercase">New Task</h2>
