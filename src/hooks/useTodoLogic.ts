@@ -199,11 +199,24 @@ const handleAdd = async (task: string, category: string, priority: string, isDai
   };
 
   const filteredTodos = todos
-    .filter(t => {
-      if (filter === 'Semua') return true;
-      if (filter === 'Daily') return t.is_daily === true; // BARU
-      return t.category === filter;
-    })
+  .filter(t => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const taskDate = t.deadline ? new Date(t.deadline) : null;
+    if (taskDate) taskDate.setHours(0, 0, 0, 0);
+
+    if (filter === 'Semua') return true;
+    if (filter === 'Today') {
+      // Menampilkan yang deadline-nya hari ini ATAU yang bersifat Daily
+      return (taskDate && taskDate.getTime() === today.getTime()) || t.is_daily;
+    }
+    if (filter === 'Upcoming') {
+      // Menampilkan yang deadline-nya lebih dari hari ini
+      return taskDate && taskDate.getTime() > today.getTime();
+    }
+    if (filter === 'Daily') return t.is_daily === true;
+    return t.category === filter;
+  })
     .sort((a, b) => {
       if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1
       const dateA = a.inserted_at ? new Date(a.inserted_at).getTime() : 0
