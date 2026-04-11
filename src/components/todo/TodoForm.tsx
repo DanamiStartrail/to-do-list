@@ -29,9 +29,11 @@ export const TodoForm = ({ isOpen, onClose, onAdd }: TodoFormProps) => {
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Backdrop (Latar belakang gelap blur) */}
       <div 
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-md transition-opacity"
-        onClick={onClose} // Klik luar untuk tutup
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300"
+        onClick={onClose} 
       />
+      {/* Backdrop (Latar belakang gelap blur) */}
+
 
       {/* Box Modal (Isi Form) */}
       <div className="relative w-full max-w-xl bg-white border border-slate-100 p-6 md:p-8 rounded-[40px] shadow-[0_30px_100px_rgba(0,0,0,0.15)] animate-in fade-in zoom-in duration-300">
