@@ -27,17 +27,17 @@ export const TodoForm = ({ isOpen, onClose, onAdd }: TodoFormProps) => {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop (Latar belakang gelap blur) */}
-      <div 
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300"
-        onClick={onClose} 
-      />
+    {/* Backdrop - Pakai opacity biasa dulu untuk amannya */}
+    <div 
+      className="absolute inset-0 bg-slate-900/40 backdrop-blur-md transition-opacity duration-300"
+      onClick={onClose} 
+    />
       {/* Backdrop (Latar belakang gelap blur) */}
 
 
       {/* Box Modal (Isi Form) */}
       <div className="relative w-full max-w-xl bg-white border border-slate-100 p-6 md:p-8 rounded-[32px] shadow-[0_30px_100px_rgba(0,0,0,0.15)] 
-  animate-in fade-in zoom-in-95 slide-in-from-bottom-10 duration-500 ease-out">
+      animate-fade-in-up shadow-[0_30px_100px_rgba(0,0,0,0.12)]">
         
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-xl font-black tracking-tight text-slate-900 uppercase">New Task</h2>
