@@ -54,7 +54,7 @@ export const TodoForm = ({ isOpen, onClose, onAdd }: any) => {
               <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Workspace</label>
               <div className="flex gap-1.5 flex-wrap">
                 {['Pribadi', 'ITERA', 'Project'].map(cat => (
-                  <button key={cat} onClick={() => setCategory(cat)} className={`px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase transition-all ${category === cat ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>{cat}</button>
+                  <button key={cat} type="button" onClick={() => setCategory(cat)} className={`px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase transition-all ${category === cat ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>{cat}</button>
                 ))}
               </div>
             </div>
@@ -63,53 +63,53 @@ export const TodoForm = ({ isOpen, onClose, onAdd }: any) => {
             <div className="space-y-2">
               <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Settings</label>
               <div className="flex gap-2">
-                <button onClick={() => setIsDaily(!isDaily)} className={`flex-1 py-1.5 rounded-xl border text-[9px] font-black uppercase transition-all ${isDaily ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-slate-100 text-slate-400'}`}>Daily</button>
+                <button type="button" onClick={() => setIsDaily(!isDaily)} className={`flex-1 py-1.5 rounded-xl border text-[9px] font-black uppercase transition-all ${isDaily ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-white border-slate-100 text-slate-400'}`}>Daily</button>
                 <input type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} className="flex-1 bg-slate-50 border-none text-[9px] font-black uppercase px-2 rounded-xl outline-none text-slate-600 cursor-pointer" />
               </div>
             </div>
+          </div> {/* <-- Penutup Grid di sini */}
 
-              <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Priority_Level</label>
-                <div className="flex gap-2">
-                  {['Low', 'Medium', 'High'].map(p => (
-                    <button 
-                      key={p} onClick={() => setPriority(p)}
-                      className={`flex-1 py-1.5 rounded-xl text-[9px] font-black uppercase border transition-all ${
-                        priority === p 
-                          ? p === 'High' ? 'bg-rose-500 border-rose-500 text-white shadow-lg shadow-rose-500/20' :
-                            p === 'Medium' ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' :
-                            'bg-slate-900 border-slate-900 text-white'
-                          : 'bg-white border-slate-100 text-slate-400'
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </div>
+          {/* Priority Level Selector */}
+          <div className="space-y-2">
+            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Priority_Rank</label>
+            <div className="flex gap-1.5 p-1 bg-slate-50 rounded-[18px] border border-slate-100/50">
+              {['Low', 'Medium', 'High'].map((p) => (
+                <button 
+                  key={p} type="button" onClick={() => setPriority(p)}
+                  className={`flex-1 py-2 rounded-[14px] text-[9px] font-black uppercase transition-all duration-200 ${
+                    priority === p 
+                      ? p === 'High' ? 'bg-rose-500 text-white shadow-md shadow-rose-500/20' :
+                        p === 'Medium' ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' :
+                        'bg-slate-900 text-white shadow-md shadow-slate-900/10'
+                      : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100/50'
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* New Feature: Specific Days Selector (Hanya muncul jika Daily aktif) */}
+          {/* Specific Days Selector */}
           <div className={`space-y-2 transition-all duration-300 ${isDaily ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 h-0 overflow-hidden'}`}>
             <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Repeat On Specific Days</label>
             <div className="flex justify-between gap-1">
               {days.map((day, idx) => (
                 <button 
-                  key={day} onClick={() => toggleDay(fullDays[idx])}
+                  key={day} type="button" onClick={() => toggleDay(fullDays[idx])}
                   className={`flex-1 py-2 rounded-lg text-[9px] font-bold transition-all ${selectedDays.includes(fullDays[idx]) ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-transparent'} border`}
                 >
                   {day}
                 </button>
               ))}
             </div>
-            <p className="text-[7px] text-slate-400 italic">Kosongkan jika ingin muncul setiap hari.</p>
           </div>
 
+          {/* Description */}
           <div className="space-y-2">
             <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Description (Optional)</label>
             <textarea 
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={description} onChange={(e) => setDescription(e.target.value)}
               className="w-full bg-slate-50 border-none px-4 py-3 text-slate-700 placeholder:text-slate-300 outline-none text-xs font-medium rounded-xl focus:ring-4 focus:ring-emerald-500/5 transition-all resize-none h-20"
               placeholder="Tambahkan detail tugas atau catatan..."
             />
