@@ -198,6 +198,14 @@ const handleAdd = async (task: string, category: string, priority: string, isDai
     }
   };
 
+  const getCategoryProgress = (categoryName: string) => {
+    const categoryTodos = todos.filter(t => t.category === categoryName);
+    if (categoryTodos.length === 0) return 0;
+    
+    const completed = categoryTodos.filter(t => t.is_completed).length;
+    return Math.round((completed / categoryTodos.length) * 100);
+  };
+
   const filteredTodos = todos
   .filter(t => {
     const today = new Date();
@@ -233,7 +241,7 @@ const handleAdd = async (task: string, category: string, priority: string, isDai
 
   return {
     filter, setFilter, loading, showInstallBtn, currentTime, isModalOpen,
-    activeQuote, userName, filteredTodos, stats,isSidebarOpen, setIsSidebarOpen,
+    activeQuote, userName, filteredTodos, stats,isSidebarOpen, getCategoryProgress, setIsSidebarOpen,
     setIsModalOpen,toggleSidebar, toggleModal,handleInstallClick, handleAdd, 
     handleToggle, handleDelete, handlePurge, handleLogout, handleUpdateDeadline
   }

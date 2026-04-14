@@ -7,7 +7,7 @@ import { useState } from 'react'
 export default function Home() {
   const {
     filter, setFilter, loading, showInstallBtn, currentTime, 
-    activeQuote, userName, filteredTodos, stats,
+    activeQuote, userName, filteredTodos, stats, getCategoryProgress,
     handleInstallClick, handleAdd, handleToggle, handleDelete, handlePurge, handleLogout,
     handleUpdateDeadline
   } = useTodoLogic();
@@ -62,7 +62,7 @@ export default function Home() {
                   key={item.id}
                   onClick={() => setFilter(item.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${
-                    filter === item.id ? 'bg-emerald-50 text-emerald-600' : 'text-slate-400 hover:bg-slate-50'
+                    filter === item.id ? 'bg-emerald-50 text-emerald-600' : 'text-slate-600 hover:bg-slate-50'
                   }`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -73,21 +73,66 @@ export default function Home() {
               ))}
             </div>
 
-            <div className="space-y-0.5">
-              <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.2em] ml-3 mb-2">Workspaces</p>
-              {['Pribadi', 'ITERA', 'Project'].map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setFilter(cat)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${
-                    filter === cat ? 'bg-slate-900 text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'
-                  }`}
-                >
-                  <div className={`w-1 h-1 rounded-full ${filter === cat ? 'bg-emerald-400' : 'bg-slate-200'}`} />
-                  {cat}
-                </button>
-              ))}
-            </div>
+              {/* Group 2: Categories (Clean & Silent Version) */}
+              <div className="space-y-1">
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] ml-3 mb-3">Workspaces</p>
+                {['Pribadi', 'ITERA', 'Project'].map((cat) => {
+                  const progress = getCategoryProgress(cat);
+                  const radius = 7;
+                  const circumference = 2 * Math.PI * radius;
+                  const offset = circumference - (progress / 100) * circumference;
+                  const isActive = filter === cat;
+
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setFilter(cat)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-colors duration-200 ${
+                        isActive 
+                          ? 'bg-slate-900 text-white shadow-md' 
+                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="relative w-4 h-4 flex items-center justify-center">
+                          <svg className="w-full h-full -rotate-90 overflow-visible">
+                            {/* Track Ring - Tanpa Animasi */}
+                            <circle
+                              cx="8"
+                              cy="8"
+                              r={radius}
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              fill="transparent"
+                              className={`${isActive ? 'text-slate-700' : 'text-slate-100'} transition-none`}
+                            />
+                            {/* Progress Indicator - Animasi hanya pada stroke-dashoffset */}
+                            <circle
+                              cx="8"
+                              cy="8"
+                              r={radius}
+                              stroke="#10b981"
+                              strokeWidth="2"
+                              strokeDasharray={circumference}
+                              strokeDashoffset={offset}
+                              strokeLinecap="round"
+                              fill="transparent"
+                              className="transition-[stroke-dashoffset] duration-500 ease-in-out"
+                            />
+                          </svg>
+                        </div>
+                        <span className="transition-none">{cat}</span>
+                      </div>
+                      
+                      {progress > 0 && (
+                        <span className={`text-[7px] font-black ${isActive ? 'text-emerald-400' : 'text-slate-400'}`}>
+                          {progress}%
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
           </nav>
 
           <div className="mt-auto pt-4 border-t border-slate-50">
@@ -108,7 +153,7 @@ export default function Home() {
             <div className="flex items-center gap-4">
               <button 
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-emerald-500 transition-all shadow-sm"
+                className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-600 hover:text-emerald-500 transition-all shadow-sm"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -117,13 +162,13 @@ export default function Home() {
                 </svg>
               </button>
               <div>
-                <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-500 mb-0.5">Status_Online</p>
+                <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-500 mb-0.5">Status Online</p>
                 <h2 className="text-xl md:text-2xl font-black tracking-tighter text-slate-900 leading-tight">{getGreeting()}, {userName}</h2>
               </div>
             </div>
             
             <div className="hidden sm:block text-right bg-white px-4 py-2 rounded-2xl border border-slate-50 shadow-sm">
-              <p className="text-[7px] font-black uppercase tracking-[0.3em] text-slate-300">Local_Time</p>
+              <p className="text-[7px] font-black uppercase tracking-[0.3em] text-slate-300">Local Time</p>
               <p className="text-lg font-black tracking-tighter text-slate-900 tabular-nums">
                 {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
               </p>
@@ -148,7 +193,7 @@ export default function Home() {
 
           {/* List Header - Compact */}
           <div className="flex items-center justify-between mb-6 px-4">
-            <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            <h3 className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em]">
               Focus <span className="text-emerald-500">/</span> <span className="text-slate-900">{filter}</span>
             </h3>
             {stats.done > 0 && (
