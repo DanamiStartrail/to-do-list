@@ -23,18 +23,26 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
   };
 
   return (
-    <div className={`group bg-white px-6 py-5 rounded-[28px] border border-slate-50 border-r-[6px] flex items-start gap-5 transition-all hover:shadow-xl ${priorityConfig[todo.priority] || 'border-r-slate-100'}`}>
-      {/* Checkbox */}
+    <div className={`group bg-white px-6 py-5 rounded-[28px] border border-slate-50 border-r-[6px] flex items-start gap-5 transition-all hover:shadow-xl hover:shadow-slate-200/50 ${
+      todo.priority === 'High' ? 'border-r-rose-500 shadow-[0_10px_30px_-15px_rgba(244,63,94,0.15)]' : 
+      todo.priority === 'Medium' ? 'border-r-emerald-500' : 'border-r-slate-200'
+    }`}>
+      
+      {/* 1. Checkbox Section */}
       <button 
         onClick={() => onToggle(todo.id, todo.is_completed)}
         className={`w-6 h-6 mt-1 rounded-xl border-2 transition-all flex items-center justify-center flex-shrink-0 ${
           todo.is_completed ? 'bg-emerald-500 border-emerald-500 shadow-lg shadow-emerald-500/20' : 'border-slate-100 bg-slate-50'
         }`}
       >
-        {todo.is_completed && <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>}
+        {todo.is_completed && (
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        )}
       </button>
 
-      {/* Content Area */}
+      {/* 2. Content Section */}
       <div className="flex-1 min-w-0">
         {isEditing ? (
           <input
@@ -47,7 +55,7 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
           />
         ) : (
           <>
-            {/* Bagian Judul (Klik untuk Rename) */}
+            {/* Judul Task (Klik untuk Rename) */}
             <h3 
               onClick={() => setIsEditing(true)}
               className={`text-sm font-bold tracking-tight transition-all cursor-text mb-1 ${
@@ -57,13 +65,18 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
               {todo.task}
             </h3>
 
-            {/* Bagian Label & Toggle Deskripsi */}
-            <div className="flex items-center gap-2">
+            {/* Metadata: Category, Timestamp, & Toggle Note */}
+            <div className="flex items-center gap-2 flex-wrap">
               {todo.category && (
-                <span className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-400">
+                <span className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-700">
                   {todo.category}
                 </span>
               )}
+              
+              {/* Timestamp Baru */}
+              <span className="text-[8px] font-bold text-slate-700 uppercase tracking-tighter">
+                • {new Date(todo.inserted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
               
               {todo.description && (
                 <button 
@@ -75,10 +88,10 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
               )}
             </div>
 
-            {/* Expandable Description */}
+            {/* Description Area (Expandable) */}
             {showDesc && todo.description && (
               <div className="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-100 animate-in fade-in slide-in-from-top-1 duration-200">
-                <p className="text-[11px] leading-relaxed text-slate-600 whitespace-pre-line font-medium">
+                <p className="text-[11px] leading-relaxed text-slate-700 whitespace-pre-line font-medium">
                   {todo.description}
                 </p>
               </div>
@@ -87,13 +100,17 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
         )}
       </div>
 
-      {/* Delete Button */}
+      {/* 3. Action Section */}
       <button 
         onClick={() => onDelete(todo.id)}
         className="opacity-0 group-hover:opacity-100 p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all flex-shrink-0"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 6h18"></path>
+          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+        </svg>
       </button>
     </div>
-  )
+  );
 }
