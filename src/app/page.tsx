@@ -133,6 +133,27 @@ export default function Home() {
                   );
                 })}
               </div>
+              {/* Focus Summary Card - Tambahkan di bawah Navigasi Workspaces */}
+              <div className="mt-auto mb-6 px-4">
+                <div className="bg-slate-50 rounded-[24px] p-4 border border-slate-100/50">
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Overall_Progress</p>
+                  
+                  <div className="flex items-end justify-between mb-2">
+                    <h4 className="text-xl font-black text-slate-900 tracking-tighter">
+                      {Math.round((stats.done / (stats.pending + stats.done || 1)) * 100)}%
+                    </h4>
+                    <p className="text-[9px] font-bold text-slate-400 mb-1">{stats.done}/{stats.pending + stats.done} Done</p>
+                  </div>
+
+                  {/* Mini Progress Bar */}
+                  <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-emerald-500 transition-all duration-1000 ease-out"
+                      style={{ width: `${(stats.done / (stats.pending + stats.done || 1)) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
           </nav>
 
           <div className="mt-auto pt-4 border-t border-slate-50">
