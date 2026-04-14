@@ -30,7 +30,7 @@ export default function Home() {
       
       {/* --- SIDEBAR AREA (COMPACT) --- */}
       <aside className={`bg-white border-r border-slate-100 transition-all duration-500 ease-in-out z-40 ${isSidebarOpen ? 'w-64' : 'w-0 -ml-1'} relative flex flex-col shadow-sm`}>
-        <div className={`p-6 whitespace-nowrap transition-opacity duration-300 flex flex-col h-full ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`px-3 py-6 whitespace-nowrap transition-opacity duration-300 flex flex-col h-full ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>
           
           {/* Logo Section - Scaled Down */}
           <div className="mb-8">
@@ -134,7 +134,7 @@ export default function Home() {
                 })}
               </div>
               {/* Focus Summary Card - Tambahkan di bawah Navigasi Workspaces */}
-              <div className="mt-auto mb-6 px-4">
+              <div className="mt-auto mb-6 px-0">
                 <div className="bg-slate-50 rounded-[24px] p-4 border border-slate-100/50">
                   <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Overall_Progress</p>
                   
