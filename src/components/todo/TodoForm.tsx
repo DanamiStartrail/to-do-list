@@ -20,11 +20,21 @@ export const TodoForm = ({ isOpen, onClose, onAdd }: any) => {
   }
 
   const handleSubmit = () => {
-    if (!newTask.trim()) return
-    // Kirim selectedDays ke fungsi onAdd (pastikan onAdd di useTodoLogic menerima parameter baru ini)
-    onAdd(newTask, category, priority, isDaily, deadline || null, selectedDays, description);
-    setNewTask(''); setIsDaily(false); setDeadline(''); setSelectedDays([]); onClose()
-  }
+    if (!newTask.trim()) return;
+
+    let finalDeadline = null;
+    if (deadline) {
+      // Ubah input string "2026-04-14T21:35" menjadi objek Date lokal, 
+      // lalu ubah ke ISO String (UTC) untuk dikirim ke Supabase.
+      finalDeadline = new Date(deadline).toISOString(); 
+    }
+
+    onAdd(newTask, category, priority, isDaily, finalDeadline, selectedDays, description);
+    
+    setNewTask('');
+    setDescription('');
+    onClose();
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
