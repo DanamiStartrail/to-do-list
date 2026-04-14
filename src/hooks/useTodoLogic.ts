@@ -22,88 +22,68 @@ export const useTodoLogic = () => {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [activeQuote, setActiveQuote] = useState("")
   const [userName, setUserName] = useState("User")
-  const router = useRouter();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  // Dapatkan nama hari saat ini (e.g., "Monday", "Tuesday")
-  const todayName = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(new Date());
-  const sync = (updated: any[]) => { 
-  setTodos(updated); 
-  localStorage.setItem('raven_todos', JSON.stringify(updated)); 
-};
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [mounted, setMounted] = useState(false) // Fix Hydration
 
-  // --- FUNGSI RESET DAILY (BARU) ---
+  const router = useRouter();
+  const todayName = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(new Date());
+
+  // Helper Sync
+  const sync = useCallback((updated: any[]) => { 
+    setTodos(updated); 
+    localStorage.setItem('raven_todos', JSON.stringify(updated));
+  }, []);
+
+  // --- FUNGSI RESET DAILY ---
   const checkAndResetDaily = useCallback(async (currentTodos: any[]) => {
     const today = new Date().toLocaleDateString('id-ID');
     const lastReset = localStorage.getItem('raven_last_reset');
 
-    // Jika hari ini berbeda dengan hari terakhir reset tersimpan
     if (lastReset !== today) {
       const dailyIds = currentTodos
         .filter(t => t.is_daily && t.is_completed)
         .map(t => t.id);
 
       if (dailyIds.length > 0) {
-        const { error } = await supabase
-          .from('todos')
-          .update({ is_completed: false })
-          .in('id', dailyIds);
-
+        const { error } = await supabase.from('todos').update({ is_completed: false }).in('id', dailyIds);
         if (!error) {
           localStorage.setItem('raven_last_reset', today);
-          return true; // Menandakan ada perubahan
+          return true;
         }
       } else {
-        // Tetap simpan tanggal hari ini meskipun tidak ada task harian yang perlu direset
         localStorage.setItem('raven_last_reset', today);
       }
     }
     return false;
   }, []);
 
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-  const toggleModal = () => setIsModalOpen(!isModalOpen);
-
   const fetchTodos = useCallback(async (userId: string) => {
-    const { data, error } = await supabase
-      .from('todos')
-      .select('*')
-      .eq('user_id', userId)
-    
+    const { data, error } = await supabase.from('todos').select('*').eq('user_id', userId)
     if (!error && data) {
-      // Jalankan pengecekan reset tepat setelah data diambil
       const hasReset = await checkAndResetDaily(data);
-      if (hasReset) {
-        // Jika ada yang direset, ambil data ulang atau update lokal
-        const updatedData = data.map(t => t.is_daily ? { ...t, is_completed: false } : t);
-        setTodos(updatedData);
-        localStorage.setItem('raven_todos', JSON.stringify(updatedData));
-      } else {
-        setTodos(data);
-        localStorage.setItem('raven_todos', JSON.stringify(data));
-      }
+      const finalData = hasReset ? data.map(t => t.is_daily ? { ...t, is_completed: false } : t) : data;
+      setTodos(finalData);
+      localStorage.setItem('raven_todos', JSON.stringify(finalData));
     }
   }, [checkAndResetDaily]);
 
+  // App Initialization & Time Logic
   useEffect(() => {
+    setMounted(true);
     const initApp = async () => {
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/login')
-        return
-      }
+      if (!user) { router.push('/login'); return; }
       setUserName("Danta")
       await fetchTodos(user.id)
       setLoading(false)
     }
     initApp()
 
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000)
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault()
-      setDeferredPrompt(e)
-      setShowInstallBtn(true)
+      e.preventDefault(); setDeferredPrompt(e); setShowInstallBtn(true);
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
@@ -119,121 +99,56 @@ export const useTodoLogic = () => {
     }
   }, [todos.length])
 
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return
-    deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
-    if (outcome === 'accepted') setShowInstallBtn(false)
-    setDeferredPrompt(null)
+  // Actions
+  const handleAdd = async (task: string, category: string, priority: string, is_daily: boolean, deadline: string | null, repeat_days: string[], description: string) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    // Ganti ke ISOString agar anti-ngawur deadlinenya
+    const finalDeadline = deadline ? new Date(deadline).toISOString() : null;
+    
+    const { data, error } = await supabase.from('todos').insert([{ 
+      task, category, priority, user_id: user?.id, is_daily, deadline: finalDeadline, repeat_days, description 
+    }]).select()
+    if (!error && data) sync([data[0], ...todos])
   }
-
-  // --- UPDATE HANDLEADD (DITAMBAH PARAMETER isDaily) ---
-  // Update parameter handleAdd
-// Di dalam useTodoLogic.ts, cari fungsi handleAdd dan sesuaikan:
-const handleAdd = async (task: string, category: string, priority: string, is_daily: boolean, deadline: string | null, repeat_days: string[], description: string) => {
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data, error } = await supabase
-    .from('todos')
-    .insert([{ task, category, priority, user_id: user?.id, is_daily, deadline, repeat_days, description }])
-    .select()
-  
-  if (!error && data) sync([data[0], ...todos])
-}
 
   const handleToggle = async (id: string, is_comp: boolean) => {
     if (!(await supabase.from('todos').update({ is_completed: !is_comp }).eq('id', id)).error)
       sync(todos.map(t => t.id === id ? { ...t, is_completed: !is_comp } : t));
   };
 
-  const handleDelete = async (id: string) => {
-    const { error } = await supabase.from('todos').delete().eq('id', id)
-    if (!error) {
-      const updated = todos.filter(t => t.id !== id)
-      setTodos(updated)
-      localStorage.setItem('raven_todos', JSON.stringify(updated))
-    }
-  }
-
-  const handlePurge = async () => {
-    const completedIds = todos.filter(t => t.is_completed && !t.is_daily).map(t => t.id) // Daily tidak ikut di-purge
-    if (completedIds.length === 0 || !confirm(`Purge ${completedIds.length} tasks?`)) return
-    const { error } = await supabase.from('todos').delete().in('id', completedIds)
-    if (!error) {
-      const updated = todos.filter(t => !completedIds.includes(t.id))
-      setTodos(updated)
-      localStorage.setItem('raven_todos', JSON.stringify(updated))
-    }
-  }
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    localStorage.removeItem('raven_todos')
-    localStorage.removeItem('raven_last_reset') // BARU
-    router.push('/login')
-  }
-
-  const handleUpdateDeadline = async (id: string, newDeadline: string) => {
-    const { error } = await supabase
-      .from('todos')
-      .update({ deadline: newDeadline })
-      .eq('id', id);
-
-    if (!error) {
-      const updated = todos.map(t => t.id === id ? { ...t, deadline: newDeadline } : t);
-      setTodos(updated);
-      localStorage.setItem('raven_todos', JSON.stringify(updated));
-    }
-  };
-
-  const getCategoryProgress = (categoryName: string) => {
-    const categoryTodos = todos.filter(t => t.category === categoryName);
-    if (categoryTodos.length === 0) return 0;
-    
-    const completed = categoryTodos.filter(t => t.is_completed).length;
-    return Math.round((completed / categoryTodos.length) * 100);
-  };
-  // Tambahkan di dalam useTodoLogic.ts
   const handleRename = async (id: string, text: string) => {
     if (text.trim() && !(await supabase.from('todos').update({ task: text }).eq('id', id)).error)
       sync(todos.map(t => t.id === id ? { ...t, task: text } : t));
   };
 
-// Jangan lupa return handleRename di bagian bawah hook
+  const handleDelete = async (id: string) => {
+    if (!(await supabase.from('todos').delete().eq('id', id)).error)
+      sync(todos.filter(t => t.id !== id));
+  }
 
-  const filteredTodos = todos
-  .filter((t) => {
-    // 1. Cek apakah tugas ini punya jadwal hari spesifik
-    const hasSpecificDays = t.repeat_days && t.repeat_days.length > 0;
-    const isScheduledForToday = hasSpecificDays ? t.repeat_days.includes(todayName) : true;
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    localStorage.clear();
+    router.push('/login');
+  }
 
-    // 2. Jika filter "Today" aktif, sembunyikan tugas yang tidak dijadwalkan hari ini
-    if (filter === 'Today' && !isScheduledForToday) return false;
+  const getCategoryProgress = (categoryName: string) => {
+    const catTodos = todos.filter(t => t.category === categoryName);
+    return catTodos.length ? Math.round((catTodos.filter(t => t.is_completed).length / catTodos.length) * 100) : 0;
+  };
 
-    // 3. Logika filter kategori yang sudah ada
-    if (filter === 'Semua') return true;
-    if (filter === 'Today') return true; // (Sudah tersaring di poin 2)
-    if (filter === 'Upcoming') {
-      const taskDate = t.deadline ? new Date(t.deadline) : null;
-      return taskDate && taskDate > new Date();
-    }
+  const filteredTodos = todos.filter((t) => {
+    const isScheduledToday = t.repeat_days?.length > 0 ? t.repeat_days.includes(todayName) : true;
+    if (filter === 'Today' && !isScheduledToday) return false;
+    if (filter === 'Semua' || filter === 'Today') return true;
+    if (filter === 'Upcoming') return t.deadline && new Date(t.deadline) > new Date();
     return t.category === filter;
-  })
-    // Di dalam useMemo filteredTodos:
-    .sort((a, b) => {
-      // 1. Yang belum selesai di atas
-      if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1;
-      
-      // 2. Jika sama-sama belum selesai, cek prioritas (High > Medium > Low)
-      if (!a.is_completed) {
-        const pMap: any = { High: 3, Medium: 2, Low: 1 };
-        if (pMap[a.priority] !== pMap[b.priority]) {
-          return pMap[b.priority] - pMap[a.priority];
-        }
-      }
-      
-      // 3. Terakhir urutkan berdasarkan waktu input
-      return new Date(b.inserted_at).getTime() - new Date(a.inserted_at).getTime();
-    })
+  }).sort((a, b) => {
+    if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1;
+    const pMap: any = { High: 3, Medium: 2, Low: 1 };
+    if (!a.is_completed && pMap[a.priority] !== pMap[b.priority]) return pMap[b.priority] - pMap[a.priority];
+    return new Date(b.inserted_at).getTime() - new Date(a.inserted_at).getTime();
+  });
 
   const stats = {
     pending: todos.filter(t => !t.is_completed).length,
@@ -243,9 +158,9 @@ const handleAdd = async (task: string, category: string, priority: string, is_da
   }
 
   return {
-    filter, setFilter, loading, showInstallBtn, currentTime, isModalOpen,
-    activeQuote, userName, filteredTodos, stats,isSidebarOpen, getCategoryProgress, setIsSidebarOpen,
-    setIsModalOpen,toggleSidebar, toggleModal,handleInstallClick, handleAdd, handleRename,
-    handleToggle, handleDelete, handlePurge, handleLogout, handleUpdateDeadline
+    filter, setFilter, loading, showInstallBtn, currentTime, isModalOpen, mounted,
+    activeQuote, userName, filteredTodos, stats, isSidebarOpen, getCategoryProgress,
+    setIsSidebarOpen, setIsModalOpen, handleInstallClick: async () => {}, // placeholder
+    handleAdd, handleRename, handleToggle, handleDelete, handleLogout
   }
 }

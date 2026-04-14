@@ -1,4 +1,5 @@
 'use client'
+import { useState, useEffect } from 'react'
 import { useTodoLogic } from '@/hooks/useTodoLogic'
 import { TodoForm } from '@/components/todo/TodoForm'
 import { TodoItem } from '@/components/todo/TodoItem'
@@ -6,11 +7,13 @@ import { TodoItem } from '@/components/todo/TodoItem'
 export default function Home() {
   const {
     filter, setFilter, loading, currentTime, activeQuote, userName, filteredTodos, stats, 
-    getCategoryProgress, handleAdd, handleToggle, handleDelete, handlePurge, handleLogout,
-    handleUpdateDeadline, handleRename, isModalOpen, setIsModalOpen, isSidebarOpen, setIsSidebarOpen
+    getCategoryProgress, handleAdd, handleToggle, handleDelete, handleLogout,
+    handleRename, isModalOpen, setIsModalOpen, isSidebarOpen, setIsSidebarOpen, 
+    mounted // Kita ambil state mounted dari hook
   } = useTodoLogic();
 
   const getGreeting = () => {
+    if (!mounted) return 'Loading';
     const h = currentTime.getHours();
     return h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening';
   };
@@ -29,18 +32,23 @@ export default function Home() {
       {/* --- SIDEBAR --- */}
       <aside className={`bg-white border-r border-slate-100 transition-all duration-500 z-40 ${isSidebarOpen ? 'w-64' : 'w-0 -ml-1'} relative flex flex-col shadow-sm`}>
         <div className={`px-3 py-6 transition-opacity duration-300 flex flex-col h-full ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>
-          <div className="mb-8">
-            <h1 className="text-xl font-black text-slate-900">Raven<span className="text-emerald-500">.</span></h1>
-            <p className="text-[8px] font-black tracking-[0.3em] text-slate-300 uppercase">Management_v3</p>
+          <div className="mb-8 flex items-center gap-3">
+             {/* Logo Section - Siap untuk Image nantinya */}
+             <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-black text-xs">R</div>
+             <div>
+                <h1 className="text-xl font-black text-slate-900 leading-none">Raven<span className="text-emerald-500">.</span></h1>
+                <p className="text-[8px] font-black tracking-[0.3em] text-slate-300 uppercase">Management_v3</p>
+             </div>
           </div>
 
           <button onClick={() => setIsModalOpen(true)} className="w-full flex items-center gap-2.5 bg-emerald-500 text-white px-4 py-3 rounded-xl font-bold text-[10px] tracking-widest uppercase hover:bg-slate-900 transition-all mb-8 shadow-md shadow-emerald-500/10 group">
-            <div className="bg-white/20 p-1 rounded-md group-hover:rotate-90 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></div>
+            <div className="bg-white/20 p-1 rounded-md group-hover:rotate-90 transition-all">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </div>
             Add Task
           </button>
 
           <nav className="space-y-8 overflow-y-auto scrollbar-hide">
-            {/* Timeframe */}
             <div className="space-y-0.5">
               <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.2em] ml-3 mb-2">Timeframe</p>
               {[
@@ -55,7 +63,6 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Workspaces */}
             <div className="space-y-1">
               <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] ml-3 mb-3">Workspaces</p>
               {['Pribadi', 'ITERA', 'Project'].map((cat) => {
@@ -77,7 +84,6 @@ export default function Home() {
               })}
             </div>
 
-            {/* Progress Card */}
             <div className="mt-auto mb-6 px-0">
               <div className="bg-slate-50 rounded-[24px] p-4 border border-slate-100/50">
                 <div className="flex items-end justify-between mb-2">
@@ -112,9 +118,13 @@ export default function Home() {
                 <p className="text-[10px] font-medium text-slate-500 italic opacity-80">{getMsg()}</p>
               </div>
             </div>
+            
+            {/* FIX HYDRATION DISINI */}
             <div className="hidden sm:block text-right bg-white px-4 py-2 rounded-2xl border border-slate-50 shadow-sm">
               <p className="text-[7px] font-black uppercase tracking-[0.3em] text-slate-300">Time</p>
-              <p className="text-lg font-black tracking-tighter text-slate-900 tabular-nums">{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
+              <p className="text-lg font-black tracking-tighter text-slate-900 tabular-nums">
+                {mounted ? currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : "--:--"}
+              </p>
             </div>
           </div>
 
@@ -129,7 +139,6 @@ export default function Home() {
 
           <div className="flex items-center justify-between mb-6 px-4 text-[9px] font-black uppercase tracking-[0.2em]">
             <h3 className="text-slate-600">Focus <span className="text-emerald-500">/</span> <span className="text-slate-900">{filter}</span></h3>
-            {stats.done > 0 && <button onClick={handlePurge} className="text-rose-500 hover:bg-rose-50 transition-all px-3 py-1.5 rounded-lg border border-rose-100">Purge Done</button>}
           </div>
 
           <div className="space-y-3 pb-24">
@@ -141,13 +150,14 @@ export default function Home() {
                 <h3 className="text-slate-900 font-black text-sm italic opacity-80 leading-relaxed">"{activeQuote}"</h3>
               </div>
             ) : filteredTodos.map(todo => (
-              <TodoItem key={todo.id} todo={todo} onToggle={handleToggle} onDelete={handleDelete} onRename={handleRename} onUpdateDeadline={handleUpdateDeadline} />
+              <TodoItem key={todo.id} todo={todo} onToggle={handleToggle} onDelete={handleDelete} onRename={handleRename} />
             ))}
           </div>
         </div>
       </section>
 
       <TodoForm isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAdd={handleAdd} />
+      
       <button onClick={() => setIsModalOpen(true)} className="fixed bottom-6 right-6 w-12 h-12 bg-slate-900 text-white rounded-xl shadow-xl flex items-center justify-center z-30 md:hidden active:scale-90 transition-transform">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
       </button>
