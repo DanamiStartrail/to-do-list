@@ -22,9 +22,15 @@ export const useTodoLogic = () => {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [activeQuote, setActiveQuote] = useState("")
   const [userName, setUserName] = useState("User")
-  const router = useRouter()
+  const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // Dapatkan nama hari saat ini (e.g., "Monday", "Tuesday")
+  const todayName = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(new Date());
+  const sync = (updated: any[]) => { 
+  setTodos(updated); 
+  localStorage.setItem('raven_todos', JSON.stringify(updated)); 
+};
 
   // --- FUNGSI RESET DAILY (BARU) ---
   const checkAndResetDaily = useCallback(async (currentTodos: any[]) => {
@@ -123,40 +129,21 @@ export const useTodoLogic = () => {
 
   // --- UPDATE HANDLEADD (DITAMBAH PARAMETER isDaily) ---
   // Update parameter handleAdd
-const handleAdd = async (task: string, category: string, priority: string, isDaily: boolean, deadline: string | null) => {
+// Di dalam useTodoLogic.ts, cari fungsi handleAdd dan sesuaikan:
+const handleAdd = async (task: string, category: string, priority: string, is_daily: boolean, deadline: string | null, repeat_days: string[], description: string) => {
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return
-
   const { data, error } = await supabase
     .from('todos')
-    .insert([{ 
-      task, 
-      category, 
-      priority, 
-      user_id: user.id,
-      is_daily: isDaily,
-      deadline: deadline // Masukkan ke database
-    }])
+    .insert([{ task, category, priority, user_id: user?.id, is_daily, deadline, repeat_days, description }])
     .select()
-
-  if (!error && data) {
-    const updated = [data[0], ...todos]
-    setTodos(updated)
-    localStorage.setItem('raven_todos', JSON.stringify(updated))
-  }
+  
+  if (!error && data) sync([data[0], ...todos])
 }
 
-  const handleToggle = async (id: string, is_completed: boolean) => {
-    const { error } = await supabase
-      .from('todos')
-      .update({ is_completed: !is_completed })
-      .eq('id', id)
-    if (!error) {
-      const updated = todos.map(t => t.id === id ? { ...t, is_completed: !is_completed } : t)
-      setTodos(updated)
-      localStorage.setItem('raven_todos', JSON.stringify(updated))
-    }
-  }
+  const handleToggle = async (id: string, is_comp: boolean) => {
+    if (!(await supabase.from('todos').update({ is_completed: !is_comp }).eq('id', id)).error)
+      sync(todos.map(t => t.id === id ? { ...t, is_completed: !is_comp } : t));
+  };
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from('todos').delete().eq('id', id)
@@ -205,24 +192,30 @@ const handleAdd = async (task: string, category: string, priority: string, isDai
     const completed = categoryTodos.filter(t => t.is_completed).length;
     return Math.round((completed / categoryTodos.length) * 100);
   };
+  // Tambahkan di dalam useTodoLogic.ts
+  const handleRename = async (id: string, text: string) => {
+    if (text.trim() && !(await supabase.from('todos').update({ task: text }).eq('id', id)).error)
+      sync(todos.map(t => t.id === id ? { ...t, task: text } : t));
+  };
+
+// Jangan lupa return handleRename di bagian bawah hook
 
   const filteredTodos = todos
-  .filter(t => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const taskDate = t.deadline ? new Date(t.deadline) : null;
-    if (taskDate) taskDate.setHours(0, 0, 0, 0);
+  .filter((t) => {
+    // 1. Cek apakah tugas ini punya jadwal hari spesifik
+    const hasSpecificDays = t.repeat_days && t.repeat_days.length > 0;
+    const isScheduledForToday = hasSpecificDays ? t.repeat_days.includes(todayName) : true;
 
+    // 2. Jika filter "Today" aktif, sembunyikan tugas yang tidak dijadwalkan hari ini
+    if (filter === 'Today' && !isScheduledForToday) return false;
+
+    // 3. Logika filter kategori yang sudah ada
     if (filter === 'Semua') return true;
-    if (filter === 'Today') {
-      // Menampilkan yang deadline-nya hari ini ATAU yang bersifat Daily
-      return (taskDate && taskDate.getTime() === today.getTime()) || t.is_daily;
-    }
+    if (filter === 'Today') return true; // (Sudah tersaring di poin 2)
     if (filter === 'Upcoming') {
-      // Menampilkan yang deadline-nya lebih dari hari ini
-      return taskDate && taskDate.getTime() > today.getTime();
+      const taskDate = t.deadline ? new Date(t.deadline) : null;
+      return taskDate && taskDate > new Date();
     }
-    if (filter === 'Daily') return t.is_daily === true;
     return t.category === filter;
   })
     .sort((a, b) => {
@@ -242,7 +235,7 @@ const handleAdd = async (task: string, category: string, priority: string, isDai
   return {
     filter, setFilter, loading, showInstallBtn, currentTime, isModalOpen,
     activeQuote, userName, filteredTodos, stats,isSidebarOpen, getCategoryProgress, setIsSidebarOpen,
-    setIsModalOpen,toggleSidebar, toggleModal,handleInstallClick, handleAdd, 
+    setIsModalOpen,toggleSidebar, toggleModal,handleInstallClick, handleAdd, handleRename,
     handleToggle, handleDelete, handlePurge, handleLogout, handleUpdateDeadline
   }
 }
