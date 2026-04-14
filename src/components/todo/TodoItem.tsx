@@ -16,8 +16,14 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
     }
   }
 
+  const priorityConfig: any = {
+    High: 'border-l-rose-500 shadow-[0_0_15px_-5px_rgba(244,63,94,0.1)]',
+    Medium: 'border-l-emerald-500',
+    Low: 'border-l-slate-200'
+  };
+
   return (
-    <div className="group bg-white px-6 py-5 rounded-[28px] border border-slate-50 flex items-start gap-5 transition-all hover:shadow-xl hover:shadow-slate-200/50">
+    <div className={`group bg-white px-6 py-5 rounded-[28px] border border-slate-50 border-l-[6px] flex items-start gap-5 transition-all hover:shadow-xl ${priorityConfig[todo.priority] || 'border-l-slate-100'}`}>
       {/* Checkbox */}
       <button 
         onClick={() => onToggle(todo.id, todo.is_completed)}

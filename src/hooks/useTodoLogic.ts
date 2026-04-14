@@ -218,11 +218,21 @@ const handleAdd = async (task: string, category: string, priority: string, is_da
     }
     return t.category === filter;
   })
+    // Di dalam useMemo filteredTodos:
     .sort((a, b) => {
-      if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1
-      const dateA = a.inserted_at ? new Date(a.inserted_at).getTime() : 0
-      const dateB = b.inserted_at ? new Date(b.inserted_at).getTime() : 0
-      return dateB - dateA
+      // 1. Yang belum selesai di atas
+      if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1;
+      
+      // 2. Jika sama-sama belum selesai, cek prioritas (High > Medium > Low)
+      if (!a.is_completed) {
+        const pMap: any = { High: 3, Medium: 2, Low: 1 };
+        if (pMap[a.priority] !== pMap[b.priority]) {
+          return pMap[b.priority] - pMap[a.priority];
+        }
+      }
+      
+      // 3. Terakhir urutkan berdasarkan waktu input
+      return new Date(b.inserted_at).getTime() - new Date(a.inserted_at).getTime();
     })
 
   const stats = {

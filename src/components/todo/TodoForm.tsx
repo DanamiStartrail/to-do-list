@@ -8,6 +8,7 @@ export const TodoForm = ({ isOpen, onClose, onAdd }: any) => {
   const [deadline, setDeadline] = useState('')
   const [selectedDays, setSelectedDays] = useState<string[]>([])
   const [description, setDescription] = useState('')
+  const [priority, setPriority] = useState('Medium');
 
   if (!isOpen) return null
 
@@ -21,7 +22,7 @@ export const TodoForm = ({ isOpen, onClose, onAdd }: any) => {
   const handleSubmit = () => {
     if (!newTask.trim()) return
     // Kirim selectedDays ke fungsi onAdd (pastikan onAdd di useTodoLogic menerima parameter baru ini)
-    onAdd(newTask, category, 'Medium', isDaily, deadline || null, selectedDays, description)
+    onAdd(newTask, category, priority, isDaily, deadline || null, selectedDays, description);
     setNewTask(''); setIsDaily(false); setDeadline(''); setSelectedDays([]); onClose()
   }
 
@@ -66,6 +67,26 @@ export const TodoForm = ({ isOpen, onClose, onAdd }: any) => {
                 <input type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} className="flex-1 bg-slate-50 border-none text-[9px] font-black uppercase px-2 rounded-xl outline-none text-slate-600 cursor-pointer" />
               </div>
             </div>
+
+              <div className="space-y-2">
+                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Priority_Level</label>
+                <div className="flex gap-2">
+                  {['Low', 'Medium', 'High'].map(p => (
+                    <button 
+                      key={p} onClick={() => setPriority(p)}
+                      className={`flex-1 py-1.5 rounded-xl text-[9px] font-black uppercase border transition-all ${
+                        priority === p 
+                          ? p === 'High' ? 'bg-rose-500 border-rose-500 text-white shadow-lg shadow-rose-500/20' :
+                            p === 'Medium' ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' :
+                            'bg-slate-900 border-slate-900 text-white'
+                          : 'bg-white border-slate-100 text-slate-400'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
           </div>
 
           {/* New Feature: Specific Days Selector (Hanya muncul jika Daily aktif) */}
