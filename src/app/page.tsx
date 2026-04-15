@@ -8,7 +8,8 @@ export default function Home() {
   const {
     filter, setFilter, loading, currentTime, activeQuote, userName, filteredTodos, stats, 
     getCategoryProgress, handleAdd, handleToggle, handleDelete, handleLogout,
-    handleRename, isModalOpen, setIsModalOpen, isSidebarOpen, setIsSidebarOpen, 
+    handleRename, isModalOpen, setIsModalOpen, isSidebarOpen, setIsSidebarOpen, pomodoroTime, isPomodoroRunning, pomodoroMode, 
+    togglePomodoro, setPomodoroTime, setPomodoroMode, formatPomoTime,
     mounted // Kita ambil state mounted dari hook
   } = useTodoLogic();
 
@@ -82,6 +83,48 @@ export default function Home() {
                   </button>
                 );
               })}
+            </div>
+
+            {/* Letakkan di sidebar page.tsx sebelum Progress Card */}
+            <div className="px-1 mb-6">
+              <div className={`p-4 rounded-[24px] border transition-all duration-500 ${isPomodoroRunning ? 'bg-slate-900 border-slate-800 shadow-xl scale-[1.02]' : 'bg-white border-slate-100'}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-1.5 h-1.5 rounded-full ${isPomodoroRunning ? 'bg-emerald-500 animate-pulse' : 'bg-slate-200'}`} />
+                    <p className={`text-[8px] font-black uppercase tracking-[0.2em] ${isPomodoroRunning ? 'text-emerald-400' : 'text-slate-400'}`}>
+                      {pomodoroMode} Mode
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <h4 className={`text-2xl font-black tracking-tighter tabular-nums ${isPomodoroRunning ? 'text-white' : 'text-slate-900'}`}>
+                    {formatPomoTime(pomodoroTime)}
+                  </h4>
+                  
+                  <div className="flex gap-1">
+                    <button 
+                      onClick={togglePomodoro}
+                      className={`p-2 rounded-xl transition-all ${isPomodoroRunning ? 'bg-emerald-500 text-white hover:bg-emerald-400' : 'bg-slate-50 text-slate-600 hover:bg-emerald-500 hover:text-white'}`}
+                    >
+                      {isPomodoroRunning ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                      )}
+                    </button>
+
+                    {!isPomodoroRunning && (
+                      <button 
+                        onClick={() => setPomodoroTime(pomodoroMode === 'Work' ? 25 * 60 : 5 * 60)}
+                        className="p-2 rounded-xl bg-slate-50 text-slate-300 hover:text-rose-500 transition-all"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="mt-auto mb-6 px-0">

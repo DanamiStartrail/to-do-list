@@ -25,15 +25,34 @@ export const useTodoLogic = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [mounted, setMounted] = useState(false) // Fix Hydration
-
   const router = useRouter();
   const todayName = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(new Date());
+  const [pomodoroTime, setPomodoroTime] = useState(25 * 60);
+  const [isPomodoroRunning, setIsPomodoroRunning] = useState(false);
+  const [pomodoroMode, setPomodoroMode] = useState<'Work' | 'Break'>('Work');
+  // Di dalam useTodoLogic.ts
+
+  const togglePomodoro = () => {
+    const nextState = !isPomodoroRunning;
+    setIsPomodoroRunning(nextState);
+
+    // Jika baru mulai (berubah jadi running), putar suara
+    if (nextState === true) {
+      playPomoSound('start-sound.wav'); 
+    }
+  };
 
   // Helper Sync
   const sync = useCallback((updated: any[]) => { 
     setTodos(updated); 
     localStorage.setItem('raven_todos', JSON.stringify(updated));
   }, []);
+  // Helper untuk putar suara
+  const playPomoSound = (file: string) => {
+    const audio = new Audio(`/${file}`);
+    audio.volume = 0.5;
+    audio.play().catch(e => console.log("Audio play blocked"));
+  };
 
   // --- FUNGSI RESET DAILY ---
   const checkAndResetDaily = useCallback(async (currentTodos: any[]) => {
@@ -92,6 +111,34 @@ export const useTodoLogic = () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
     }
   }, [router, fetchTodos])
+
+  useEffect(() => {
+    let interval: any;
+    if (isPomodoroRunning && pomodoroTime > 0) {
+      interval = setInterval(() => {
+        setPomodoroTime((prev) => prev - 1);
+      }, 1000);
+    } else if (pomodoroTime === 0) {
+      setIsPomodoroRunning(false);
+      
+      if (pomodoroMode === 'Work') {
+        playPomoSound('start-sound.wav'); // Sesi kerja selesai, mulai istirahat
+        setPomodoroMode('Break');
+        setPomodoroTime(5 * 60);
+      } else {
+        playPomoSound('stop-sound.wav'); // Sesi istirahat selesai, balik kerja
+        setPomodoroMode('Work');
+        setPomodoroTime(25 * 60);
+      }
+    }
+    return () => clearInterval(interval);
+  }, [isPomodoroRunning, pomodoroTime, pomodoroMode]);
+
+  const formatPomoTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     if (todos.length === 0) {
@@ -161,6 +208,7 @@ export const useTodoLogic = () => {
     filter, setFilter, loading, showInstallBtn, currentTime, isModalOpen, mounted,
     activeQuote, userName, filteredTodos, stats, isSidebarOpen, getCategoryProgress,
     setIsSidebarOpen, setIsModalOpen, handleInstallClick: async () => {}, // placeholder
-    handleAdd, handleRename, handleToggle, handleDelete, handleLogout
+    handleAdd, handleRename, handleToggle, handleDelete, handleLogout, pomodoroTime, isPomodoroRunning, pomodoroMode, 
+    togglePomodoro, setPomodoroTime, setPomodoroMode, formatPomoTime
   }
 }
