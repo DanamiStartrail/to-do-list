@@ -31,9 +31,19 @@ export default function Home() {
       <div className="fixed top-[-5%] right-[-5%] w-[400px] h-[400px] bg-emerald-200/10 blur-[100px] rounded-full pointer-events-none" />
       
       {/* --- SIDEBAR --- */}
-      <aside className={`bg-white border-r border-slate-100 transition-all duration-500 z-40 ${isSidebarOpen ? 'w-64' : 'w-0 -ml-1'} relative flex flex-col shadow-sm`}>
-        <div className={`px-3 py-6 transition-opacity duration-300 flex flex-col h-full ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>
-          <div className="mb-8 flex items-center gap-3">
+      <aside className={`
+          /* Base Style */
+          bg-white border-r border-slate-100 transition-all duration-500 z-50 flex flex-col shadow-sm
+          
+          /* Mobile Style (Overlay) */
+          fixed inset-y-0 left-0 
+          ${isSidebarOpen ? 'w-72 translate-x-0' : 'w-0 -translate-x-full'}
+          
+          /* Desktop Style (Fixed Side) */
+          md:relative md:translate-x-0 
+          ${isSidebarOpen ? 'md:w-64' : 'md:w-0 md:-ml-1'}
+        `}>
+          <div className={`px-4 py-6 transition-opacity duration-300 flex flex-col h-full ${isSidebarOpen ? 'opacity-100' : 'opacity-0 md:opacity-0'}`}>          <div className="mb-8 flex items-center gap-3">
              {/* Logo Section - Siap untuk Image nantinya */}
              <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-black text-xs">R</div>
              <div>
@@ -147,20 +157,27 @@ export default function Home() {
         </div>
       </aside>
 
+      {isSidebarOpen && (
+        <div 
+          onClick={() => setIsSidebarOpen(false)} 
+          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-300"
+        />
+      )}
+
       {/* --- CONTENT --- */}
-      <section className="flex-1 h-screen overflow-y-auto py-8 px-4 md:px-10">
-        <div className="w-full max-w-[800px] mx-auto">
-          <div className="flex justify-between items-center mb-8 px-1">
-            <div className="flex items-center gap-4">
-              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-600 hover:text-emerald-500 transition-all shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-              </button>
-              <div>
-                <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-500">Status Online</p>
-                <h2 className="text-xl md:text-2xl font-black tracking-tighter text-slate-900 leading-tight">{getGreeting()}, {userName}</h2>
-                <p className="text-[10px] font-medium text-slate-500 italic opacity-80">{getMsg()}</p>
+        <section className="flex-1 h-screen overflow-y-auto py-8 px-4 md:px-10">        
+          <div className="w-full max-w-[800px] mx-auto">
+            <div className="flex justify-between items-center mb-8 px-1">
+              <div className="flex items-center gap-4">
+                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-600 hover:text-emerald-500 transition-all shadow-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <div>
+                  <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-500">Status Online</p>
+                  <h2 className="text-xl md:text-2xl font-black tracking-tighter text-slate-900 leading-tight">{getGreeting()}, {userName}</h2>
+                  <p className="text-[10px] font-medium text-slate-500 italic opacity-80">{getMsg()}</p>
+                </div>
               </div>
-            </div>
             
             {/* FIX HYDRATION DISINI */}
             <div className="hidden sm:block text-right bg-white px-4 py-2 rounded-2xl border border-slate-50 shadow-sm">

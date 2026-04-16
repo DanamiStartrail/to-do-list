@@ -26,41 +26,33 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
     else setText(todo.task)
   }
 
+  // Di TodoItem.tsx, bagian pStyle
   const pStyle = {
     High: 'border-r-rose-500 shadow-[0_10px_30px_-15px_rgba(244,63,94,0.15)]',
     Medium: 'border-r-emerald-500',
     Low: 'border-r-slate-200'
-  }[todo.priority as string] || 'border-r-slate-100'
+  }[todo.priority as string] || 'border-r-slate-100';
 
-  // Helper agar jam deadline tidak bergeser (anti-ngawur)
-  const formatDL = (dateStr: string) => {
-    if (!dateStr) return '';
-    
-    const d = new Date(dateStr);
-    
-    // Intl.DateTimeFormat adalah cara paling standar & "bersih" di JS
-    // Dia otomatis mendeteksi timezone user dan memformatnya.
-    const timeFormatter = new Intl.DateTimeFormat('id-ID', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
+  // Di dalam TodoItem.tsx, sebelum bagian return
 
-    const dateFormatter = new Intl.DateTimeFormat('id-ID', {
-      day: 'numeric',
-      month: 'short'
-    });
+    const isOverdue = todo.deadline && !todo.is_completed && new Date(todo.deadline) < new Date();
 
-    const isToday = d.toDateString() === new Date().toDateString();
-    const timePart = timeFormatter.format(d).replace('.', ':');
-    const datePart = isToday ? 'Today' : dateFormatter.format(d);
-
-    return `${datePart}, ${timePart}`;
-  };
-
-  return (
-    <div className={`group bg-white px-6 py-5 rounded-[28px] border border-slate-50 border-r-[6px] flex items-start gap-5 transition-all hover:shadow-xl hover:shadow-slate-200/50 ${pStyle}`}>
+    const formatDL = (dateStr: string) => {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      const hours = d.getHours().toString().padStart(2, '0');
+      const minutes = d.getMinutes().toString().padStart(2, '0');
+      const day = d.getDate();
+      const month = d.toLocaleString('id-ID', { month: 'short' });
       
+      const isToday = d.toDateString() === new Date().toDateString();
+      return `${isToday ? 'Today' : day + ' ' + month}, ${hours}:${minutes}`;
+    };
+
+    const overdueStyle = isOverdue ? 'border border-rose-200 bg-rose-50/30' : 'border-slate-50 bg-white';
+  
+  return (
+    <div className={`group px-6 py-5 rounded-[28px] border-r-[6px] flex items-start gap-5 transition-all hover:shadow-xl ${pStyle} ${overdueStyle}`}>      
       {/* 1. Checkbox */}
       <button 
         onClick={() => onToggle(todo.id, todo.is_completed)}
@@ -91,14 +83,34 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
                 • {formatTimeAgo(todo.inserted_at)}
               </span>
 
-              {todo.deadline && (
-                <div className="flex items-center gap-1 bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-100/50">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                  <span className="text-[8px] font-black text-amber-600 uppercase tracking-tighter">
-                    DL: {new Date(todo.deadline).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':')}
-                  </span>
-                </div>
-              )}
+              {/* Cari bagian Deadline Pill di TodoItem.tsx */}
+                {todo.deadline && (
+                  <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border transition-colors ${
+                    isOverdue 
+                      ? 'bg-rose-50 border-rose-200 animate-pulse' // Merah & Berkedip kalau telat
+                      : 'bg-amber-50 border-amber-100/50'
+                  }`}>
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      width="8" 
+                      height="8" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke={isOverdue ? "#e11d48" : "#d97706"} 
+                      strokeWidth="4" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span className={`text-[8px] font-black uppercase tracking-tighter ${
+                      isOverdue ? 'text-rose-600' : 'text-amber-600'
+                    }`}>
+                      {isOverdue ? 'OVERDUE: ' : 'DL: '} {formatDL(todo.deadline)}
+                    </span>
+                  </div>
+                )}
               
               {todo.description && <button onClick={() => setShowDesc(!showDesc)} className={`text-[9px] font-bold transition-all ${showDesc ? 'text-emerald-600' : 'text-emerald-400'}`}>• {showDesc ? 'Hide Note' : 'See Note'}</button>}
             </div>
