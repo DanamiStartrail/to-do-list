@@ -30,17 +30,14 @@ export const useTodoLogic = () => {
   const [pomodoroTime, setPomodoroTime] = useState(25 * 60);
   const [isPomodoroRunning, setIsPomodoroRunning] = useState(false);
   const [pomodoroMode, setPomodoroMode] = useState<'Work' | 'Break'>('Work');
-  // Di dalam useTodoLogic.ts
-
   const togglePomodoro = () => {
     const nextState = !isPomodoroRunning;
     setIsPomodoroRunning(nextState);
-
-    // Jika baru mulai (berubah jadi running), putar suara
     if (nextState === true) {
       playPomoSound('start-sound.wav'); 
     }
   };
+  
 
   // Helper Sync
   const sync = useCallback((updated: any[]) => { 
@@ -197,12 +194,18 @@ export const useTodoLogic = () => {
     return new Date(b.inserted_at).getTime() - new Date(a.inserted_at).getTime();
   });
 
+  // Di dalam useTodoLogic.ts, cari variabel stats
   const stats = {
     pending: todos.filter(t => !t.is_completed).length,
     urgent: todos.filter(t => t.priority === 'High' && !t.is_completed).length,
     itera: todos.filter(t => t.category === 'ITERA' && !t.is_completed).length,
-    done: todos.filter(t => t.is_completed).length
-  }
+    done: todos.filter(t => t.is_completed).length,
+    overdue: todos.filter(t => 
+      t.deadline && 
+      !t.is_completed && 
+      new Date(t.deadline) < new Date()
+    ).length
+  };
 
   return {
     filter, setFilter, loading, showInstallBtn, currentTime, isModalOpen, mounted,

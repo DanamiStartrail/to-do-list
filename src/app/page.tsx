@@ -189,7 +189,13 @@ export default function Home() {
           </div>
 
           <div className="flex gap-3 mb-8 px-2 overflow-x-auto scrollbar-hide py-1">
-            {[{ l: 'Pending', v: stats.pending }, { l: 'Urgent', v: stats.urgent, c: 'text-rose-600 bg-rose-50 border-rose-100' }, { l: 'ITERA', v: stats.itera, c: 'text-emerald-600 bg-emerald-50 border-emerald-100' }, { l: 'Done', v: stats.done, c: 'text-slate-500 bg-slate-50 border-slate-100' }].map((s, i) => (
+            {[{ l: 'Pending', v: stats.pending }, { 
+              l: 'Overdue', 
+              v: stats.overdue, 
+              c: stats.overdue > 0 
+                ? 'text-rose-700 bg-rose-100 border-rose-200 animate-pulse' 
+                : 'text-slate-400 bg-slate-50 border-slate-100 opacity-50' 
+            },{ l: 'Urgent', v: stats.urgent, c: 'text-rose-600 bg-rose-50 border-rose-100' }, { l: 'ITERA', v: stats.itera, c: 'text-emerald-600 bg-emerald-50 border-emerald-100' }, { l: 'Done', v: stats.done, c: 'text-slate-500 bg-slate-50 border-slate-100' }].map((s, i) => (
               <div key={i} className={`flex items-center gap-2.5 px-4 py-2 rounded-full border shadow-sm ${s.c || 'bg-white border-slate-100 text-slate-900'}`}>
                 <span className="text-[10px] font-black uppercase opacity-60">{s.l}</span>
                 <span className="text-sm font-black">{s.v}</span>
