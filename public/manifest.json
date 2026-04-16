@@ -1,7 +1,7 @@
 {
-  "name": "Raven List",
+  "name": "Raven Management V3",
   "short_name": "Raven",
-  "description": "Platinum Productivity System",
+  "description": "Minimalist Task Management for Developers",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F8F9FA",

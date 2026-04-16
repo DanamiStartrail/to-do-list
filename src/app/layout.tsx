@@ -12,19 +12,11 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Raven List",
-  description: "Platinum Productivity System",
-  manifest: "/manifest.json",
-  icons: {
-    icon: "/favicon.ico",
-    apple: "/icon-512.png",
-  },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "Raven List",
-  },
+export const metadata = {
+  title: "Raven.",
+  manifest: "/manifest.json", // Link ke file tadi
+  themeColor: "#10b981",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
 };
 
 // Viewport dipisah di Next.js 15 untuk kontrol theme-color yang lebih baik
