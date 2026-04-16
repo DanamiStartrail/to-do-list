@@ -12,6 +12,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+
 export const metadata = {
   title: "Raven.",
   manifest: "/manifest.json", // Link ke file tadi
