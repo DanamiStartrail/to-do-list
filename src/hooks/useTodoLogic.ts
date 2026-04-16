@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
 
@@ -155,15 +155,19 @@ export const useTodoLogic = () => {
     if (!error && data) sync([data[0], ...todos])
   }
 
-  const handleToggle = async (id: string, is_comp: boolean) => {
-    if (!(await supabase.from('todos').update({ is_completed: !is_comp }).eq('id', id)).error)
-      sync(todos.map(t => t.id === id ? { ...t, is_completed: !is_comp } : t));
-  };
+  const handleToggle = useCallback(async (id: string, is_comp: boolean) => {
+    if (!(await supabase.from('todos').update({ is_completed: !is_comp }).eq('id', id)).error) {
+      const updated = todos.map(t => t.id === id ? { ...t, is_completed: !is_comp } : t);
+      sync(updated);
+    }
+  }, [todos, sync]);
 
-  const handleRename = async (id: string, text: string) => {
-    if (text.trim() && !(await supabase.from('todos').update({ task: text }).eq('id', id)).error)
-      sync(todos.map(t => t.id === id ? { ...t, task: text } : t));
-  };
+  const handleRename = useCallback(async (id: string, text: string) => {
+    if (text.trim() && !(await supabase.from('todos').update({ task: text }).eq('id', id)).error) {
+      const updated = todos.map(t => t.id === id ? { ...t, task: text } : t);
+      sync(updated);
+    }
+  }, [todos, sync]);
 
   const handleDelete = async (id: string) => {
     if (!(await supabase.from('todos').delete().eq('id', id)).error)
@@ -181,31 +185,30 @@ export const useTodoLogic = () => {
     return catTodos.length ? Math.round((catTodos.filter(t => t.is_completed).length / catTodos.length) * 100) : 0;
   };
 
-  const filteredTodos = todos.filter((t) => {
-    const isScheduledToday = t.repeat_days?.length > 0 ? t.repeat_days.includes(todayName) : true;
-    if (filter === 'Today' && !isScheduledToday) return false;
-    if (filter === 'Semua' || filter === 'Today') return true;
-    if (filter === 'Upcoming') return t.deadline && new Date(t.deadline) > new Date();
-    return t.category === filter;
-  }).sort((a, b) => {
-    if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1;
-    const pMap: any = { High: 3, Medium: 2, Low: 1 };
-    if (!a.is_completed && pMap[a.priority] !== pMap[b.priority]) return pMap[b.priority] - pMap[a.priority];
-    return new Date(b.inserted_at).getTime() - new Date(a.inserted_at).getTime();
-  });
+  // Bungkus filteredTodos dengan useMemo
+  const filteredTodos = useMemo(() => {
+    return todos.filter((t) => {
+      const isScheduledToday = t.repeat_days?.length > 0 ? t.repeat_days.includes(todayName) : true;
+      if (filter === 'Today' && !isScheduledToday) return false;
+      if (filter === 'Semua' || filter === 'Today') return true;
+      if (filter === 'Upcoming') return t.deadline && new Date(t.deadline) > new Date();
+      return t.category === filter;
+    }).sort((a, b) => {
+      if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1;
+      const pMap: any = { High: 3, Medium: 2, Low: 1 };
+      if (!a.is_completed && pMap[a.priority] !== pMap[b.priority]) return pMap[b.priority] - pMap[a.priority];
+      return new Date(b.inserted_at).getTime() - new Date(a.inserted_at).getTime();
+    });
+  }, [todos, filter, todayName]); // Hanya hitung ulang jika data ini berubah
 
-  // Di dalam useTodoLogic.ts, cari variabel stats
-  const stats = {
+  // Bungkus stats dengan useMemo
+  const stats = useMemo(() => ({
     pending: todos.filter(t => !t.is_completed).length,
     urgent: todos.filter(t => t.priority === 'High' && !t.is_completed).length,
     itera: todos.filter(t => t.category === 'ITERA' && !t.is_completed).length,
     done: todos.filter(t => t.is_completed).length,
-    overdue: todos.filter(t => 
-      t.deadline && 
-      !t.is_completed && 
-      new Date(t.deadline) < new Date()
-    ).length
-  };
+    overdue: todos.filter(t => t.deadline && !t.is_completed && new Date(t.deadline) < new Date()).length
+  }), [todos]); // Hanya hitung ulang jika todos berubah
 
   return {
     filter, setFilter, loading, showInstallBtn, currentTime, isModalOpen, mounted,
