@@ -9,7 +9,7 @@ export default function Home() {
     filter, setFilter, loading, currentTime, activeQuote, userName, filteredTodos, stats, 
     getCategoryProgress, handleAdd, handleToggle, handleDelete, handleLogout,
     handleRename, isModalOpen, setIsModalOpen, isSidebarOpen, setIsSidebarOpen, pomodoroTime, isPomodoroRunning, pomodoroMode, 
-    togglePomodoro, setPomodoroTime, setPomodoroMode, formatPomoTime,
+    togglePomodoro, setPomodoroTime, setPomodoroMode, formatPomoTime, archiveWeeklyTask,
     mounted // Kita ambil state mounted dari hook
   } = useTodoLogic();
 
@@ -148,6 +148,64 @@ export default function Home() {
                 </div>
               </div>
             </div>
+
+            {/* Letakkan di sidebar page.tsx, sejajar dengan widget Pomodoro */}
+            <div className="px-1 mb-6">
+              <div className="p-4 rounded-[24px] border border-slate-100 bg-white shadow-sm hover:shadow-md transition-all group">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-slate-900" />
+                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400">
+                      Database Maintenance
+                    </p>
+                  </div>
+                  {/* Indikator jumlah yang siap diarsip */}
+                  {stats.done > 0 && (
+                    <span className="text-[10px] font-black px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full animate-pulse">
+                      {stats.done} Ready
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-black text-slate-900 leading-tight">
+                      Weekly Archive
+                    </h4>
+                    <p className="text-[10px] text-slate-400 font-medium">
+                      Move done tasks to report
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={archiveWeeklyTask}
+                    disabled={stats.done === 0}
+                    className={`p-3 rounded-xl transition-all ${
+                      stats.done > 0 
+                        ? 'bg-slate-900 text-white hover:bg-emerald-600 active:scale-95' 
+                        : 'bg-slate-50 text-slate-200 cursor-not-allowed'
+                    }`}
+                  >
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      width="18" 
+                      height="18" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="3" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                      <rect x="1" y="3" width="22" height="5"></rect>
+                      <line x1="10" y1="12" x2="14" y2="12"></line>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
           </nav>
 
           <button onClick={handleLogout} className="mt-auto pt-4 border-t border-slate-50 w-full flex items-center gap-3 text-[9px] font-black tracking-widest text-slate-300 hover:text-rose-500 transition-all uppercase px-3 py-2">

@@ -30,13 +30,8 @@ export const useTodoLogic = () => {
   const [pomodoroTime, setPomodoroTime] = useState(25 * 60);
   const [isPomodoroRunning, setIsPomodoroRunning] = useState(false);
   const [pomodoroMode, setPomodoroMode] = useState<'Work' | 'Break'>('Work');
-  const togglePomodoro = () => {
-    const nextState = !isPomodoroRunning;
-    setIsPomodoroRunning(nextState);
-    if (nextState === true) {
-      playPomoSound('start-sound.wav'); 
-    }
-  };
+  const [userId, setUserId] = useState<string | null>(null);
+  
   
 
   // Helper Sync
@@ -74,6 +69,14 @@ export const useTodoLogic = () => {
     return false;
   }, []);
 
+  const togglePomodoro = () => {
+    const nextState = !isPomodoroRunning;
+    setIsPomodoroRunning(nextState);
+    if (nextState === true) {
+      playPomoSound('start-sound.wav'); 
+    }
+  };
+
   const fetchTodos = useCallback(async (userId: string) => {
     const { data, error } = await supabase.from('todos').select('*').eq('user_id', userId)
     if (!error && data) {
@@ -84,6 +87,44 @@ export const useTodoLogic = () => {
     }
   }, [checkAndResetDaily]);
 
+  const archiveWeeklyTask = async () => {
+    if (!userId) return; // Pastikan user sudah login
+
+      // 1. Ambil semua task yang sudah selesai
+    const completedTasks = todos.filter(t => t.is_completed);
+    
+    if (completedTasks.length === 0) return alert("Belum ada task yang selesai untuk diarsip.");
+
+    // 2. Hitung statistik sederhana
+    const report = {
+      user_id: userId,
+      total_done: completedTasks.length,
+      itera_count: completedTasks.filter(t => t.category === 'ITERA').length,
+      pribadi_count: completedTasks.filter(t => t.category === 'PRIBADI').length,
+      project_count: completedTasks.filter(t => t.category === 'PROJECT').length,
+      week_range: `Minggu ke-${Math.ceil(new Date().getDate() / 7)} ${new Date().toLocaleString('id-ID', { month: 'long' })}`
+      };
+
+    // 3. Simpan ke tabel laporan
+    const { error: insertError } = await supabase
+      .from('weekly_reports')
+      .insert([report]);
+
+      if (!insertError) {
+        // 4. Hapus hanya yang BUKAN daily (repeat_days kosong/null)
+        const { error: deleteError } = await supabase
+          .from('todos')
+          .delete()
+          .eq('is_completed', true)
+          .is('repeat_days', null); // Filter agar daily task selamat
+
+      if (!deleteError) {
+        alert("Laporan berhasil dibuat dan database telah dibersihkan!");
+        await fetchTodos(userId); // Pakai userId dari state
+      }
+    };
+  }
+
   // App Initialization & Time Logic
   useEffect(() => {
     setMounted(true);
@@ -91,6 +132,7 @@ export const useTodoLogic = () => {
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return; }
+      setUserId(user.id)
       setUserName("Danta")
       await fetchTodos(user.id)
       setLoading(false)
@@ -215,6 +257,6 @@ export const useTodoLogic = () => {
     activeQuote, userName, filteredTodos, stats, isSidebarOpen, getCategoryProgress,
     setIsSidebarOpen, setIsModalOpen, handleInstallClick: async () => {}, // placeholder
     handleAdd, handleRename, handleToggle, handleDelete, handleLogout, pomodoroTime, isPomodoroRunning, pomodoroMode, 
-    togglePomodoro, setPomodoroTime, setPomodoroMode, formatPomoTime
+    togglePomodoro, setPomodoroTime, setPomodoroMode, formatPomoTime, archiveWeeklyTask
   }
 }
