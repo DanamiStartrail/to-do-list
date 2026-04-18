@@ -88,14 +88,11 @@ export const useTodoLogic = () => {
   }, [checkAndResetDaily]);
 
   const archiveWeeklyTask = async () => {
-    if (!userId) return; // Pastikan user sudah login
+    if (!userId) return; 
 
-      // 1. Ambil semua task yang sudah selesai
     const completedTasks = todos.filter(t => t.is_completed);
-    
     if (completedTasks.length === 0) return alert("Belum ada task yang selesai untuk diarsip.");
 
-    // 2. Hitung statistik sederhana
     const report = {
       user_id: userId,
       total_done: completedTasks.length,
@@ -103,27 +100,34 @@ export const useTodoLogic = () => {
       pribadi_count: completedTasks.filter(t => t.category === 'PRIBADI').length,
       project_count: completedTasks.filter(t => t.category === 'PROJECT').length,
       week_range: `Minggu ke-${Math.ceil(new Date().getDate() / 7)} ${new Date().toLocaleString('id-ID', { month: 'long' })}`
-      };
+    };
 
-    // 3. Simpan ke tabel laporan
     const { error: insertError } = await supabase
       .from('weekly_reports')
       .insert([report]);
 
-      if (!insertError) {
-        // 4. Hapus hanya yang BUKAN daily (repeat_days kosong/null)
-        const { error: deleteError } = await supabase
-          .from('todos')
-          .delete()
-          .eq('is_completed', true)
-          .is('repeat_days', null); // Filter agar daily task selamat
+    if (insertError) {
+      console.error("Gagal simpan laporan:", insertError.message);
+      return alert("Gagal membuat laporan mingguan.");
+    }
 
-      if (!deleteError) {
-        alert("Laporan berhasil dibuat dan database telah dibersihkan!");
-        await fetchTodos(userId); // Pakai userId dari state
-      }
-    };
-  }
+    // 4. Proses penghapusan
+    const { error: deleteError } = await supabase
+      .from('todos')
+      .delete()
+      .eq('user_id', userId)        // TAMBAHKAN INI (Wajib untuk RLS)
+      .eq('is_completed', true)
+      .is('repeat_days', null);     
+
+    if (deleteError) {
+      console.error("Gagal hapus data:", deleteError.message);
+      return alert("Laporan tersimpan, tapi data lama gagal dihapus. Cek Policy DELETE di Supabase.");
+    }
+
+    // Berhasil semua
+    alert("Laporan berhasil dibuat dan database telah dibersihkan!");
+    await fetchTodos(userId); 
+  };
 
   // App Initialization & Time Logic
   useEffect(() => {
