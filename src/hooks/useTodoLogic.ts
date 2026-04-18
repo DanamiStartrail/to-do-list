@@ -202,11 +202,28 @@ export const useTodoLogic = () => {
   }
 
   const handleToggle = useCallback(async (id: string, is_comp: boolean) => {
-    if (!(await supabase.from('todos').update({ is_completed: !is_comp }).eq('id', id)).error) {
-      const updated = todos.map(t => t.id === id ? { ...t, is_completed: !is_comp } : t);
-      sync(updated);
+    // 1. UPDATE LOKAL SECEPAT KILAT
+    // Kita langsung ubah state 'todos' tanpa nunggu server
+    const updated = todos.map(t => t.id === id ? { ...t, is_completed: !is_comp } : t);
+    
+    // Langsung simpan ke state dan localStorage
+    setTodos(updated);
+    localStorage.setItem('raven_todos', JSON.stringify(updated));
+
+    // 2. SINKRONISASI KE SUPABASE (DI BACKGROUND)
+    const { error } = await supabase
+      .from('todos')
+      .update({ is_completed: !is_comp })
+      .eq('id', id);
+
+    // 3. HANDLING JIKA GAGAL (ROLLBACK)
+    if (error) {
+      console.error("Gagal sinkron:", error.message);
+      // Kalau internet mati atau server error, kita tarik ulang data asli agar UI sinkron kembali
+      if (userId) fetchTodos(userId); 
+      alert("Gagal memperbarui status tugas di server.");
     }
-  }, [todos, sync]);
+  }, [todos, userId, fetchTodos]); // Tambahkan userId dan fetchTodos ke dependency
 
   const handleRename = useCallback(async (id: string, text: string) => {
     if (text.trim() && !(await supabase.from('todos').update({ task: text }).eq('id', id)).error) {
