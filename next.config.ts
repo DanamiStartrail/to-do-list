@@ -9,8 +9,9 @@ const withPWA = withPWAInit({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Hapus blok experimental dan turbo yang lama
-  
+  // PAKSA NEXT.JS UNTUK DIAM SOAL TURBOPACK VS WEBPACK
+  turbopack: {}, 
+
   images: {
     remotePatterns: [
       {
@@ -19,9 +20,6 @@ const nextConfig = {
       },
     ],
   },
-  
-  // Jika kamu memang butuh fitur eksperimental di masa depan, 
-  // baru tambahkan blok experimental di sini. Untuk sekarang, biarkan bersih.
 };
 
 export default withPWA(nextConfig);
