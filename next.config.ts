@@ -2,23 +2,15 @@ import withPWAInit from 'next-pwa';
 
 const withPWA = withPWAInit({
   dest: 'public',
-  disable: process.env.NODE_ENV === 'development', // Biar nggak ganggu pas ngoding
+  disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
 });
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // PANCINGAN UTAMA: Beri tahu Next.js untuk menerima Turbopack meskipun ada plugin
-  turbopack: {}, 
+  // Hapus blok experimental dan turbo yang lama
   
-  // Jika masih error, gunakan ini sebagai cadangan:
-  experimental: {
-    turbo: {
-      // Biarkan kosong atau tambahkan rules jika diperlukan nanti
-    },
-  },
-
   images: {
     remotePatterns: [
       {
@@ -27,4 +19,9 @@ const nextConfig = {
       },
     ],
   },
+  
+  // Jika kamu memang butuh fitur eksperimental di masa depan, 
+  // baru tambahkan blok experimental di sini. Untuk sekarang, biarkan bersih.
 };
+
+export default withPWA(nextConfig);
