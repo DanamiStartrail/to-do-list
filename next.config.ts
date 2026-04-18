@@ -1,4 +1,4 @@
-import withPWAInit from 'next-pwa';
+import withPWAInit from '@ducanh2912/next-pwa'; // Pake yang @ducanh2912
 
 const withPWA = withPWAInit({
   dest: 'public',
@@ -9,9 +9,7 @@ const withPWA = withPWAInit({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // PAKSA NEXT.JS UNTUK DIAM SOAL TURBOPACK VS WEBPACK
-  turbopack: {}, 
-
+  // Biarkan kosong atau tambahkan konfigurasi images kamu
   images: {
     remotePatterns: [
       {
