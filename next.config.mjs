@@ -8,10 +8,8 @@ const withPWA = withPWAInit({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Membungkam error Turbopack di Next 16
   turbopack: {}, 
 
-  // Skip pengecekan error saat build biar lancar
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -21,7 +19,7 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: '**.supabase.co',
-        pathname: '/**', // Mengizinkan semua path gambar dari Supabase
+        pathname: '/**', 
       },
     ],
   },
