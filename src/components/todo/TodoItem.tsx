@@ -16,7 +16,6 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
     if (diffInSec < 3600) return `${Math.floor(diffInSec / 60)}m ago`;
     if (diffInSec < 86400) return `${Math.floor(diffInSec / 3600)}h ago`;
     
-    // Jika lewat 24 jam, tampilkan tanggal (14 Apr)
     return created.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
   };
 
