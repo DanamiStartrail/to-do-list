@@ -25,7 +25,6 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
     else setText(todo.task)
   }
 
-  // Di TodoItem.tsx, bagian pStyle
   const pStyle = {
     High: 'border-r-rose-500 shadow-[0_10px_30px_-15px_rgba(244,63,94,0.15)]',
     Medium: 'border-r-emerald-500',
