@@ -115,7 +115,7 @@ export const useTodoLogic = () => {
     const { error: deleteError } = await supabase
       .from('todos')
       .delete()
-      .eq('user_id', userId)        // TAMBAHKAN INI (Wajib untuk RLS)
+      .eq('user_id', userId)       
       .eq('is_completed', true)
       .is('repeat_days', null);     
 
