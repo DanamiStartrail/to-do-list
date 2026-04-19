@@ -32,8 +32,6 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
     Low: 'border-r-slate-200'
   }[todo.priority as string] || 'border-r-slate-100';
 
-  // Di dalam TodoItem.tsx, sebelum bagian return
-
     const isOverdue = todo.deadline && !todo.is_completed && new Date(todo.deadline) < new Date();
 
     const formatDL = (dateStr: string) => {
