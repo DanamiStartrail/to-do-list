@@ -163,12 +163,11 @@ export const useTodoLogic = () => {
       setIsPomodoroRunning(false);
       
       if (pomodoroMode === 'Work') {
-        playPomoSound('start-sound.wav'); // Sesi kerja selesai, mulai istirahat
+        playPomoSound('start-sound.wav');
         setPomodoroMode('Break');
         setPomodoroTime(5 * 60);
       } else {
-        playPomoSound('stop-sound.wav'); // Sesi istirahat selesai, balik kerja
-        setPomodoroMode('Work');
+        playPomoSound('stop-sound.wav');
         setPomodoroTime(25 * 60);
       }
     }
