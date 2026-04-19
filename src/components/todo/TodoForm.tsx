@@ -24,8 +24,6 @@ export const TodoForm = ({ isOpen, onClose, onAdd }: any) => {
 
     let finalDeadline = null;
     if (deadline) {
-      // Ubah input string "2026-04-14T21:35" menjadi objek Date lokal, 
-      // lalu ubah ke ISO String (UTC) untuk dikirim ke Supabase.
       finalDeadline = new Date(deadline).toISOString(); 
     }
 
