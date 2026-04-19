@@ -79,7 +79,6 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
                 • {formatTimeAgo(todo.inserted_at)}
               </span>
 
-              {/* Cari bagian Deadline Pill di TodoItem.tsx */}
                 {todo.deadline && (
                   <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border transition-colors ${
                     isOverdue 
