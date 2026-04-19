@@ -123,8 +123,6 @@ export const useTodoLogic = () => {
       console.error("Gagal hapus data:", deleteError.message);
       return alert("Laporan tersimpan, tapi data lama gagal dihapus. Cek Policy DELETE di Supabase.");
     }
-
-    // Berhasil semua
     alert("Laporan berhasil dibuat dan database telah dibersihkan!");
     await fetchTodos(userId); 
   };
