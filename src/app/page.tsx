@@ -9,7 +9,7 @@ export default function Home() {
     filter, setFilter, loading, currentTime, activeQuote, userName, filteredTodos, stats, 
     getCategoryProgress, handleAdd, handleToggle, handleDelete, handleLogout,
     handleRename, isModalOpen, setIsModalOpen, isSidebarOpen, setIsSidebarOpen, pomodoroTime, isPomodoroRunning, pomodoroMode, 
-    togglePomodoro, setPomodoroTime, setPomodoroMode, formatPomoTime, archiveWeeklyTask,
+    togglePomodoro, setPomodoroTime, setPomodoroMode, formatPomoTime, archiveWeeklyTask, handleUpdate,
     mounted // Kita ambil state mounted dari hook
   } = useTodoLogic();
 
@@ -25,6 +25,8 @@ export default function Home() {
     if (stats.pending === 0) return "Systems clear. Great job, Danta!";
     return filter !== 'Semua' ? `Workspace: ${filter}` : "Ready for today's objectives?";
   };
+
+  const [editingTodo, setEditingTodo] = useState<any>(null);
 
   return (
     <main className="min-h-screen bg-[#F8F9FA] flex relative font-sans overflow-hidden">
@@ -279,13 +281,28 @@ export default function Home() {
                 <h3 className="text-slate-900 font-black text-sm italic opacity-80 leading-relaxed">"{activeQuote}"</h3>
               </div>
             ) : filteredTodos.map(todo => (
-              <TodoItem key={todo.id} todo={todo} onToggle={handleToggle} onDelete={handleDelete} onRename={handleRename} />
-            ))}
+                <TodoItem 
+                  key={todo.id} 
+                  todo={todo} 
+                  onToggle={handleToggle} 
+                  onDelete={handleDelete} 
+                  onEdit={(t: any) => {
+                    // Sementara arahkan ke handleRename dulu agar tidak error, 
+                    // atau set state modal editmu di sini nanti.
+                    handleRename(t.id, t.task); 
+                  }} 
+                />
+              ))}
           </div>
         </div>
       </section>
 
-      <TodoForm isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAdd={handleAdd} />
+      <TodoForm 
+        isOpen={!!editingTodo} 
+        onClose={() => setEditingTodo(null)} 
+        onAdd={handleUpdate} // Fungsi update
+        initialData={editingTodo} // Data lama untuk isi form otomatis
+      />
       
       <button onClick={() => setIsModalOpen(true)} className="fixed bottom-6 right-6 w-12 h-12 bg-slate-900 text-white rounded-xl shadow-xl flex items-center justify-center z-30 md:hidden active:scale-90 transition-transform">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>

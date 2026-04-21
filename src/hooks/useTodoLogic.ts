@@ -234,6 +234,29 @@ export const useTodoLogic = () => {
       sync(todos.filter(t => t.id !== id));
   }
 
+  const handleUpdate = async (id: string, updatedData: any) => {
+    const { error } = await supabase
+      .from('todos')
+      .update({
+        task: updatedData.task,
+        category: updatedData.category,
+        priority: updatedData.priority,
+        description: updatedData.description,
+        start_time: updatedData.start_time,
+        deadline: updatedData.deadline ? new Date(updatedData.deadline).toISOString() : null,
+        is_daily: updatedData.is_daily,
+        repeat_days: updatedData.repeat_days
+      })
+      .eq('id', id);
+
+    if (!error) {
+      // Refresh data lokal
+      setTodos(prev => prev.map(t => t.id === id ? { ...t, ...updatedData } : t));
+    } else {
+      console.error("Update error:", error.message);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     localStorage.clear();
@@ -323,6 +346,6 @@ export const useTodoLogic = () => {
     activeQuote, userName, filteredTodos, stats, isSidebarOpen, getCategoryProgress,
     setIsSidebarOpen, setIsModalOpen, handleInstallClick: async () => {}, // placeholder
     handleAdd, handleRename, handleToggle, handleDelete, handleLogout, pomodoroTime, isPomodoroRunning, pomodoroMode, 
-    togglePomodoro, setPomodoroTime, setPomodoroMode, formatPomoTime, archiveWeeklyTask
+    togglePomodoro, setPomodoroTime, setPomodoroMode, formatPomoTime, archiveWeeklyTask, handleUpdate
   }
 }
