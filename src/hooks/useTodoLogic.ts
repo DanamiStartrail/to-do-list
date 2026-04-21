@@ -297,14 +297,26 @@ export const useTodoLogic = () => {
       });
   }, [todos, filter, todayName]);
 
-  // Bungkus stats dengan useMemo
-  const stats = useMemo(() => ({
-    pending: todos.filter(t => !t.is_completed).length,
-    urgent: todos.filter(t => t.priority === 'High' && !t.is_completed).length,
-    itera: todos.filter(t => t.category === 'ITERA' && !t.is_completed).length,
-    done: todos.filter(t => t.is_completed).length,
-    overdue: todos.filter(t => t.deadline && !t.is_completed && new Date(t.deadline) < new Date()).length
-  }), [todos]); // Hanya hitung ulang jika todos berubah
+  const stats = useMemo(() => {
+    const now = new Date().getTime();
+    
+    const checkActive = (t: any) => {
+      if (!t.start_time || !t.deadline || t.is_completed) return false;
+      const startDate = new Date(t.inserted_at);
+      const [h, m] = t.start_time.split(':').map(Number);
+      startDate.setHours(h, m, 0, 0);
+      return now >= startDate.getTime() && now <= new Date(t.deadline).getTime();
+    };
+
+    return {
+      pending: todos.filter(t => !t.is_completed).length,
+      urgent: todos.filter(t => t.priority === 'High' && !t.is_completed).length,
+      itera: todos.filter(t => t.category === 'ITERA' && !t.is_completed).length,
+      done: todos.filter(t => t.is_completed).length,
+      overdue: todos.filter(t => t.deadline && !t.is_completed && new Date(t.deadline).getTime() < now).length,
+      onProgress: todos.filter(t => checkActive(t)).length // <-- Tambahan
+    };
+  }, [todos]);
 
   return {
     filter, setFilter, loading, showInstallBtn, currentTime, isModalOpen, mounted,
