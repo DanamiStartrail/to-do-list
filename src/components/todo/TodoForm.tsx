@@ -9,6 +9,7 @@ export const TodoForm = ({ isOpen, onClose, onAdd }: any) => {
   const [selectedDays, setSelectedDays] = useState<string[]>([])
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState('Medium');
+  const [startTime, setStartTime] = useState("");
 
   if (!isOpen) return null
 
@@ -27,7 +28,7 @@ export const TodoForm = ({ isOpen, onClose, onAdd }: any) => {
       finalDeadline = new Date(deadline).toISOString(); 
     }
 
-    onAdd(newTask, category, priority, isDaily, finalDeadline, selectedDays, description);
+    onAdd(newTask, category, priority, isDaily, finalDeadline, selectedDays, description, startTime);
     
     setNewTask('');
     setDescription('');
