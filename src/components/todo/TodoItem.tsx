@@ -28,25 +28,7 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
     setIsEditing(false)
     if (text.trim() && text !== todo.task) onRename(todo.id, text)
     else setText(todo.task)
-  }
-
-  // --- LOGIKA ON PROGRESS ---
-  const isNow = (start: string | null, end: string | null) => {
-    if (!start || !end || todo.is_completed) return false;
-    
-    const now = new Date();
-    const currentTime = now.getHours() * 60 + now.getMinutes();
-
-    // Parse start_time (format "HH:mm")
-    const [sHours, sMinutes] = start.split(':').map(Number);
-    const startTime = sHours * 60 + sMinutes;
-
-    // Parse deadline (ISO String)
-    const dDate = new Date(end);
-    const endTime = dDate.getHours() * 60 + dDate.getMinutes();
-
-    return currentTime >= startTime && currentTime < endTime;
-  };
+  }  
 
   const pStyle = {
     High: 'border-r-rose-500 shadow-[0_10px_30px_-15px_rgba(244,63,94,0.15)]',
@@ -55,7 +37,6 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
   }[todo.priority as string] || 'border-r-slate-100';
 
   const isOverdue = todo.deadline && !todo.is_completed && new Date(todo.deadline) < new Date();
-  const active = isNow(todo.start_time, todo.deadline);
 
   const formatDL = (dateStr: string) => {
     if (!dateStr) return '';
@@ -66,12 +47,32 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
     return `${isToday ? 'Today' : d.getDate() + ' ' + d.toLocaleString('id-ID', { month: 'short' })}, ${hours}:${minutes}`;
   };
 
-  // Gabungkan gaya: Emerald Glow jika aktif, Rose jika telat, White jika normal
-  const statusStyle = active 
-    ? 'border-emerald-400 bg-emerald-50/20 animate-glow shadow-lg shadow-emerald-500/10' 
-    : isOverdue 
-      ? 'border-rose-200 bg-rose-50/30' 
-      : 'border-slate-50 bg-white';
+    // Tambahkan di dalam TodoItem sebelum return
+    const isNow = (start: string | null, end: string | null) => {
+      if (!start || !end || todo.is_completed) return false;
+      
+      const now = new Date();
+      const currentTime = now.getHours() * 60 + now.getMinutes();
+
+      // Parse start_time (format "HH:mm:ss")
+      const [sHours, sMinutes] = start.split(':').map(Number);
+      const startTime = sHours * 60 + sMinutes;
+
+      // Parse deadline (ISO String)
+      const dDate = new Date(end);
+      const endTime = dDate.getHours() * 60 + dDate.getMinutes();
+
+      return currentTime >= startTime && currentTime < endTime;
+    };
+
+    const active = isNow(todo.start_time, todo.deadline);
+
+    // Gunakan 'active' untuk mengganti class container
+    const statusStyle = active 
+      ? 'border-emerald-400 bg-emerald-50/20 animate-glow shadow-lg shadow-emerald-500/10' 
+      : isOverdue 
+        ? 'border-rose-200 bg-rose-50/30' 
+        : 'border-slate-50 bg-white';
 
   return (
     <div className={`group px-6 py-5 rounded-[28px] border-r-[6px] flex items-start gap-5 transition-all hover:shadow-xl ${pStyle} ${statusStyle}`}>      
