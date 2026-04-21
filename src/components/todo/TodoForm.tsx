@@ -70,10 +70,23 @@ export const TodoForm = ({ isOpen, onClose, onAdd }: any) => {
 
             {/* Quick Settings */}
             <div className="space-y-2">
-              <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Settings</label>
+              <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Time & Schedule</label>
               <div className="flex gap-2">
-                <button type="button" onClick={() => setIsDaily(!isDaily)} className={`flex-1 py-1.5 rounded-xl border text-[9px] font-black uppercase transition-all ${isDaily ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-white border-slate-100 text-slate-400'}`}>Daily</button>
-                <input type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} className="flex-1 bg-slate-50 border-none text-[9px] font-black uppercase px-2 rounded-xl outline-none text-slate-600 cursor-pointer" />
+                {/* Input Start Time */}
+                <input 
+                  type="time" 
+                  value={startTime} 
+                  onChange={(e) => setStartTime(e.target.value)} 
+                  className="flex-1 bg-slate-50 border-none text-[10px] font-bold px-3 py-2 rounded-xl outline-none text-slate-600 cursor-pointer focus:ring-2 focus:ring-emerald-500/20" 
+                  placeholder="Start"
+                />
+                {/* Input Deadline */}
+                <input 
+                  type="datetime-local" 
+                  value={deadline} 
+                  onChange={(e) => setDeadline(e.target.value)} 
+                  className="flex-2 bg-slate-50 border-none text-[9px] font-black uppercase px-2 rounded-xl outline-none text-slate-600 cursor-pointer focus:ring-2 focus:ring-rose-500/20" 
+                />
               </div>
             </div>
           </div> {/* <-- Penutup Grid di sini */}

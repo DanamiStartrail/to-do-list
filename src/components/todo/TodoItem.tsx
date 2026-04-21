@@ -5,7 +5,8 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
   const [isEditing, setIsEditing] = useState(false)
   const [text, setText] = useState(todo.task)
   const [showDesc, setShowDesc] = useState(false)
-  // State untuk trigger re-render otomatis setiap menit agar status "active" update
+  
+  // State untuk memicu re-render setiap menit agar status "active" terupdate otomatis
   const [, setTick] = useState(0)
 
   useEffect(() => {
@@ -29,19 +30,20 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
     else setText(todo.task)
   }
 
-  // REVISED: Logika pengecekan waktu jalan sekarang
-  const isNow = (start: string, end: string) => {
+  // --- LOGIKA ON PROGRESS ---
+  const isNow = (start: string | null, end: string | null) => {
     if (!start || !end || todo.is_completed) return false;
     
     const now = new Date();
     const currentTime = now.getHours() * 60 + now.getMinutes();
 
-    // Supabase TIME format bisa "03:00:00", kita ambil HH:mm saja
+    // Parse start_time (format "HH:mm")
     const [sHours, sMinutes] = start.split(':').map(Number);
-    const [eHours, eMinutes] = end.split(':').map(Number);
-    
     const startTime = sHours * 60 + sMinutes;
-    const endTime = eHours * 60 + eMinutes;
+
+    // Parse deadline (ISO String)
+    const dDate = new Date(end);
+    const endTime = dDate.getHours() * 60 + dDate.getMinutes();
 
     return currentTime >= startTime && currentTime < endTime;
   };
@@ -64,15 +66,15 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
     return `${isToday ? 'Today' : d.getDate() + ' ' + d.toLocaleString('id-ID', { month: 'short' })}, ${hours}:${minutes}`;
   };
 
-  // STYLE LOGIC
-  const activeStyle = active 
+  // Gabungkan gaya: Emerald Glow jika aktif, Rose jika telat, White jika normal
+  const statusStyle = active 
     ? 'border-emerald-400 bg-emerald-50/20 animate-glow shadow-lg shadow-emerald-500/10' 
     : isOverdue 
       ? 'border-rose-200 bg-rose-50/30' 
       : 'border-slate-50 bg-white';
 
   return (
-    <div className={`group px-6 py-5 rounded-[28px] border-r-[6px] flex items-start gap-5 transition-all hover:shadow-xl ${pStyle} ${activeStyle}`}>      
+    <div className={`group px-6 py-5 rounded-[28px] border-r-[6px] flex items-start gap-5 transition-all hover:shadow-xl ${pStyle} ${statusStyle}`}>      
       {/* 1. Checkbox */}
       <button 
         onClick={() => onToggle(todo.id, todo.is_completed)}
@@ -101,7 +103,7 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
               {/* Badge Sedang Berjalan */}
               {active && (
                 <span className="flex items-center gap-1 text-[8px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full tracking-widest animate-bounce">
-                   ON PROGRESS
+                  ON PROGRESS
                 </span>
               )}
 
