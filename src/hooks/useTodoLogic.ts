@@ -245,21 +245,57 @@ export const useTodoLogic = () => {
     return catTodos.length ? Math.round((catTodos.filter(t => t.is_completed).length / catTodos.length) * 100) : 0;
   };
 
-  // Bungkus filteredTodos dengan useMemo
   const filteredTodos = useMemo(() => {
-    return todos.filter((t) => {
-      const isScheduledToday = t.repeat_days?.length > 0 ? t.repeat_days.includes(todayName) : true;
-      if (filter === 'Today' && !isScheduledToday) return false;
-      if (filter === 'Semua' || filter === 'Today') return true;
-      if (filter === 'Upcoming') return t.deadline && new Date(t.deadline) > new Date();
-      return t.category === filter;
-    }).sort((a, b) => {
-      if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1;
-      const pMap: any = { High: 3, Medium: 2, Low: 1 };
-      if (!a.is_completed && pMap[a.priority] !== pMap[b.priority]) return pMap[b.priority] - pMap[a.priority];
-      return new Date(b.inserted_at).getTime() - new Date(a.inserted_at).getTime();
-    });
-  }, [todos, filter, todayName]); // Hanya hitung ulang jika data ini berubah
+    // Helper Internal untuk cek status Active/On Progress
+    const checkActive = (t: any) => {
+      if (!t.start_time || !t.deadline || t.is_completed) return false;
+      const now = new Date().getTime();
+      const startDate = new Date(t.inserted_at);
+      const [h, m] = t.start_time.split(':').map(Number);
+      startDate.setHours(h, m, 0, 0);
+      const endDate = new Date(t.deadline).getTime();
+      return now >= startDate.getTime() && now <= endDate;
+    };
+
+    const priorityWeight: any = { High: 3, Medium: 2, Low: 1 };
+
+    return todos
+      .filter((t) => {
+        const isScheduledToday = t.repeat_days?.length > 0 ? t.repeat_days.includes(todayName) : true;
+        if (filter === 'Today' && !isScheduledToday) return false;
+        if (filter === 'Semua' || filter === 'Today') return true;
+        if (filter === 'Upcoming') return t.deadline && new Date(t.deadline) > new Date();
+        return t.category === filter;
+      })
+      .sort((a, b) => {
+        // 1. Yang sudah selesai selalu di paling bawah
+        if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1;
+
+        if (!a.is_completed) {
+          const now = new Date().getTime();
+          const aOverdue = a.deadline && new Date(a.deadline).getTime() < now;
+          const bOverdue = b.deadline && new Date(b.deadline).getTime() < now;
+          const aActive = checkActive(a);
+          const bActive = checkActive(b);
+
+          // --- LEVEL 1: OVERDUE ---
+          if (aOverdue && !bOverdue) return -1;
+          if (!aOverdue && bOverdue) return 1;
+
+          // --- LEVEL 2: ON PROGRESS ---
+          if (aActive && !bActive) return -1;
+          if (!aActive && bActive) return 1;
+
+          // --- LEVEL 3: PRIORITY (Jika status sama-sama overdue/active/normal) ---
+          if (priorityWeight[b.priority] !== priorityWeight[a.priority]) {
+            return priorityWeight[b.priority] - priorityWeight[a.priority];
+          }
+        }
+
+        // --- LEVEL 4: TERBARU ---
+        return new Date(b.inserted_at).getTime() - new Date(a.inserted_at).getTime();
+      });
+  }, [todos, filter, todayName]);
 
   // Bungkus stats dengan useMemo
   const stats = useMemo(() => ({

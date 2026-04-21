@@ -50,8 +50,6 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
     Low: 'border-r-slate-200'
   }[todo.priority as string] || 'border-r-slate-100';
 
-  const isOverdue = todo.deadline && !todo.is_completed && new Date(todo.deadline) < new Date();
-
   const formatDL = (dateStr: string) => {
     if (!dateStr) return '';
     const d = new Date(dateStr);
@@ -62,35 +60,39 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
   };
 
     // Tambahkan di dalam TodoItem sebelum return
-    const isNow = (start: string | null, end: string | null) => {
-      if (!start || !end || todo.is_completed) return false;
-      
-      const now = new Date();
-      const currentTime = now.getHours() * 60 + now.getMinutes();
+  const isNow = (start: string | null, end: string | null) => {
+    if (!start || !end || todo.is_completed) return false;
+    
+    const now = new Date();
+    const currentTime = now.getTime(); // Pakai Timestamp agar akurat antar hari
 
-      // Parse start_time (format "HH:mm:ss")
-      const [sHours, sMinutes] = start.split(':').map(Number);
-      const startTime = sHours * 60 + sMinutes;
+    // Kita buat objek Date untuk Start Time (menggunakan tanggal hari ini/inserted_at)
+    const startDate = new Date(todo.inserted_at); 
+    const [sHours, sMinutes] = start.split(':').map(Number);
+    startDate.setHours(sHours, sMinutes, 0, 0);
 
-      // Parse deadline (ISO String)
-      const dDate = new Date(end);
-      const endTime = dDate.getHours() * 60 + dDate.getMinutes();
+    // Deadline sudah dalam format ISO String, jadi tinggal kita buat objek Date
+    const endDate = new Date(end);
 
-      return currentTime >= startTime && currentTime < endTime;
-    };
+    // Jika sekarang berada di antara waktu mulai dan waktu selesai
+    return currentTime >= startDate.getTime() && currentTime <= endDate.getTime();
+  };
 
-    const active = isNow(todo.start_time, todo.deadline);
+  const active = isNow(todo.start_time, todo.deadline);
+  const isOverdue = todo.deadline && !todo.is_completed && new Date(todo.deadline) < new Date();
 
-    // Gunakan 'active' untuk mengganti class container
-    const statusStyle = active 
-      ? 'border-emerald-400 bg-emerald-50/20 animate-glow shadow-lg shadow-emerald-500/10' 
-      : isOverdue 
-        ? 'border-rose-200 bg-rose-50/30' 
-        : 'border-slate-50 bg-white';
+  // 2. Tentukan Style Container Utama
+  // Jika aktif: Pakai animate-glow (Emerald)
+  // Jika telat: Pakai animate-pulse (Rose)
+  // Jika normal: Putih bersih
+  const statusStyle = active 
+    ? 'border border-emerald-400 bg-emerald-50/30 animate-glow shadow-[0_0_20px_rgba(16,185,129,0.1)]' 
+    : isOverdue 
+      ? 'border border-rose-200 bg-rose-50/30' 
+      : 'border-slate-50 bg-white';
 
   return (
-    <div className={`group px-6 py-5 rounded-[28px] border-r-[6px] flex items-start gap-5 transition-all hover:shadow-xl ${pStyle} ${statusStyle}`}>      
-      {/* 1. Checkbox */}
+    <div className={`group px-6 py-5 rounded-[28px] border-r-[6px] flex items-start gap-5 transition-all hover:shadow-xl ${pStyle} ${statusStyle}`}>      {/* 1. Checkbox */}
       <button 
         onClick={() => onToggle(todo.id, todo.is_completed)}
         className={`w-6 h-6 mt-1 rounded-xl border-2 transition-all flex items-center justify-center flex-shrink-0 ${
@@ -115,13 +117,6 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
             </h3>
             
             <div className="flex items-center gap-2 flex-wrap">
-              {/* Badge Sedang Berjalan */}
-              {active && (
-                <span className="flex items-center gap-1 text-[8px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full tracking-widest animate-bounce">
-                  ON PROGRESS
-                </span>
-              )}
-
               {todo.category && <span className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-400">{todo.category}</span>}
               <span className="text-[8px] font-bold text-slate-300 uppercase tracking-tighter">• {formatTimeAgo(todo.inserted_at)}</span>
 
@@ -149,6 +144,13 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
                     {isOverdue ? 'OVERDUE: ' : active ? 'UNTIL: ' : 'DL: '} {formatDL(todo.deadline)}
                   </span>
                 </div>
+              )}
+
+              {/* Badge Sedang Berjalan */}
+              {active && (
+                <span className="flex items-center gap-1 text-[8px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full tracking-widest animate-bounce">
+                  ON PROGRESS
+                </span>
               )}
               
               {todo.description && <button onClick={() => setShowDesc(!showDesc)} className={`text-[9px] font-bold transition-all ${showDesc ? 'text-emerald-600' : 'text-emerald-400'}`}>• {showDesc ? 'Hide Note' : 'See Note'}</button>}
