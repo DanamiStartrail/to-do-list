@@ -187,13 +187,13 @@ export const useTodoLogic = () => {
   }, [todos.length])
 
   // Actions
-  const handleAdd = async (task: string, category: string, priority: string, is_daily: boolean, deadline: string | null, repeat_days: string[], description: string) => {
+  const handleAdd = async (task: string, category: string, priority: string, is_daily: boolean, deadline: string | null, repeat_days: string[], description: string, start_time: string | null) => {
     const { data: { user } } = await supabase.auth.getUser()
     // Ganti ke ISOString agar anti-ngawur deadlinenya
     const finalDeadline = deadline ? new Date(deadline).toISOString() : null;
     
     const { data, error } = await supabase.from('todos').insert([{ 
-      task, category, priority, user_id: user?.id, is_daily, deadline: finalDeadline, repeat_days, description 
+      task, category, priority, user_id: user?.id, is_daily, deadline: finalDeadline, start_time, repeat_days, description 
     }]).select()
     if (!error && data) sync([data[0], ...todos])
   }

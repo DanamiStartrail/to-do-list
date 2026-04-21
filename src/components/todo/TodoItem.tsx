@@ -1,21 +1,25 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
   const [isEditing, setIsEditing] = useState(false)
   const [text, setText] = useState(todo.task)
   const [showDesc, setShowDesc] = useState(false)
+  // State untuk trigger re-render otomatis setiap menit agar status "active" update
+  const [, setTick] = useState(0)
 
-  // --- HELPER TIME AGO ---
+  useEffect(() => {
+    const timer = setInterval(() => setTick(prev => prev + 1), 60000)
+    return () => clearInterval(timer)
+  }, [])
+
   const formatTimeAgo = (dateStr: string) => {
     const created = new Date(dateStr);
     const now = new Date();
     const diffInSec = Math.floor((now.getTime() - created.getTime()) / 1000);
-
     if (diffInSec < 60) return 'Just Now';
     if (diffInSec < 3600) return `${Math.floor(diffInSec / 60)}m ago`;
     if (diffInSec < 86400) return `${Math.floor(diffInSec / 3600)}h ago`;
-    
     return created.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
   };
 
@@ -25,12 +29,14 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
     else setText(todo.task)
   }
 
+  // REVISED: Logika pengecekan waktu jalan sekarang
   const isNow = (start: string, end: string) => {
-    if (!start || !end) return false;
+    if (!start || !end || todo.is_completed) return false;
     
     const now = new Date();
     const currentTime = now.getHours() * 60 + now.getMinutes();
 
+    // Supabase TIME format bisa "03:00:00", kita ambil HH:mm saja
     const [sHours, sMinutes] = start.split(':').map(Number);
     const [eHours, eMinutes] = end.split(':').map(Number);
     
@@ -46,25 +52,27 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
     Low: 'border-r-slate-200'
   }[todo.priority as string] || 'border-r-slate-100';
 
-    const isOverdue = todo.deadline && !todo.is_completed && new Date(todo.deadline) < new Date();
+  const isOverdue = todo.deadline && !todo.is_completed && new Date(todo.deadline) < new Date();
+  const active = isNow(todo.start_time, todo.deadline);
 
-    const formatDL = (dateStr: string) => {
-      if (!dateStr) return '';
-      const d = new Date(dateStr);
-      const hours = d.getHours().toString().padStart(2, '0');
-      const minutes = d.getMinutes().toString().padStart(2, '0');
-      const day = d.getDate();
-      const month = d.toLocaleString('id-ID', { month: 'short' });
-      
-      const isToday = d.toDateString() === new Date().toDateString();
-      return `${isToday ? 'Today' : day + ' ' + month}, ${hours}:${minutes}`;
-    };
+  const formatDL = (dateStr: string) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const hours = d.getHours().toString().padStart(2, '0');
+    const minutes = d.getMinutes().toString().padStart(2, '0');
+    const isToday = d.toDateString() === new Date().toDateString();
+    return `${isToday ? 'Today' : d.getDate() + ' ' + d.toLocaleString('id-ID', { month: 'short' })}, ${hours}:${minutes}`;
+  };
 
-    const overdueStyle = isOverdue ? 'border border-rose-200 bg-rose-50/30' : 'border-slate-50 bg-white';
-    const active = isNow(todo.start_time, todo.deadline);
+  // STYLE LOGIC
+  const activeStyle = active 
+    ? 'border-emerald-400 bg-emerald-50/20 animate-glow shadow-lg shadow-emerald-500/10' 
+    : isOverdue 
+      ? 'border-rose-200 bg-rose-50/30' 
+      : 'border-slate-50 bg-white';
 
   return (
-    <div className={`group px-6 py-5 rounded-[28px] border-r-[6px] flex items-start gap-5 transition-all hover:shadow-xl ${pStyle} ${overdueStyle}`}>      
+    <div className={`group px-6 py-5 rounded-[28px] border-r-[6px] flex items-start gap-5 transition-all hover:shadow-xl ${pStyle} ${activeStyle}`}>      
       {/* 1. Checkbox */}
       <button 
         onClick={() => onToggle(todo.id, todo.is_completed)}
@@ -85,43 +93,34 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
           />
         ) : (
           <>
-            <h3 onClick={() => setIsEditing(true)} className={`text-sm font-bold tracking-tight cursor-text mb-1 ${todo.is_completed ? 'text-slate-300 line-through' : 'text-slate-700'}`}>{todo.task}</h3>
+            <h3 onClick={() => setIsEditing(true)} className={`text-sm font-bold tracking-tight cursor-text mb-1 ${todo.is_completed ? 'text-slate-300 line-through' : active ? 'text-emerald-900' : 'text-slate-700'}`}>
+              {todo.task}
+            </h3>
             
             <div className="flex items-center gap-2 flex-wrap">
-              {todo.category && <span className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-400">{todo.category}</span>}
-              
-              {/* TIMESTAMP REVISED */}
-              <span className="text-[8px] font-bold text-slate-300 uppercase tracking-tighter">
-                • {formatTimeAgo(todo.inserted_at)}
-              </span>
+              {/* Badge Sedang Berjalan */}
+              {active && (
+                <span className="flex items-center gap-1 text-[8px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full tracking-widest animate-bounce">
+                   ON PROGRESS
+                </span>
+              )}
 
-                {todo.deadline && (
-                  <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border transition-colors ${
-                    isOverdue 
-                      ? 'bg-rose-50 border-rose-200 animate-pulse' // Merah & Berkedip kalau telat
-                      : 'bg-amber-50 border-amber-100/50'
-                  }`}>
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      width="8" 
-                      height="8" 
-                      viewBox="0 0 24 24" 
-                      fill="none" 
-                      stroke={isOverdue ? "#e11d48" : "#d97706"} 
-                      strokeWidth="4" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round"
-                    >
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    <span className={`text-[8px] font-black uppercase tracking-tighter ${
-                      isOverdue ? 'text-rose-600' : 'text-amber-600'
-                    }`}>
-                      {isOverdue ? 'OVERDUE: ' : 'DL: '} {formatDL(todo.deadline)}
-                    </span>
-                  </div>
-                )}
+              {todo.category && <span className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-400">{todo.category}</span>}
+              <span className="text-[8px] font-bold text-slate-300 uppercase tracking-tighter">• {formatTimeAgo(todo.inserted_at)}</span>
+
+              {todo.deadline && (
+                <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border transition-colors ${
+                  isOverdue ? 'bg-rose-50 border-rose-200 animate-pulse' : active ? 'bg-emerald-100 border-emerald-200' : 'bg-amber-50 border-amber-100/50'
+                }`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke={isOverdue ? "#e11d48" : active ? "#059669" : "#d97706"} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span className={`text-[8px] font-black uppercase tracking-tighter ${isOverdue ? 'text-rose-600' : active ? 'text-emerald-700' : 'text-amber-600'}`}>
+                    {isOverdue ? 'OVERDUE: ' : active ? 'UNTIL: ' : 'DL: '} {formatDL(todo.deadline)}
+                  </span>
+                </div>
+              )}
               
               {todo.description && <button onClick={() => setShowDesc(!showDesc)} className={`text-[9px] font-bold transition-all ${showDesc ? 'text-emerald-600' : 'text-emerald-400'}`}>• {showDesc ? 'Hide Note' : 'See Note'}</button>}
             </div>
