@@ -61,7 +61,8 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
     };
 
     const overdueStyle = isOverdue ? 'border border-rose-200 bg-rose-50/30' : 'border-slate-50 bg-white';
-  
+    const active = isNow(todo.start_time, todo.deadline);
+
   return (
     <div className={`group px-6 py-5 rounded-[28px] border-r-[6px] flex items-start gap-5 transition-all hover:shadow-xl ${pStyle} ${overdueStyle}`}>      
       {/* 1. Checkbox */}
