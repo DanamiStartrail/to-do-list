@@ -24,6 +24,20 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
     return created.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
   };
 
+  // Di dalam TodoItem.tsx
+  const formatStart = (timeStr: string, insertedAt: string) => {
+    if (!timeStr) return '';
+    
+    // Karena start_time di DB cuma "HH:mm", kita ambil Tanggal & Bulan dari inserted_at
+    const d = new Date(insertedAt);
+    const [hours, minutes] = timeStr.split(':');
+    const day = d.getDate();
+    const month = d.toLocaleString('id-ID', { month: 'short' });
+    
+    const isToday = d.toDateString() === new Date().toDateString();
+    return `${isToday ? 'Today' : day + ' ' + month}, ${hours}:${minutes}`;
+  };
+
   const saveRename = () => {
     setIsEditing(false)
     if (text.trim() && text !== todo.task) onRename(todo.id, text)
@@ -110,6 +124,18 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
 
               {todo.category && <span className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-400">{todo.category}</span>}
               <span className="text-[8px] font-bold text-slate-300 uppercase tracking-tighter">• {formatTimeAgo(todo.inserted_at)}</span>
+
+              {/* Tanda START (Emerald) */}
+              {todo.start_time && (
+                <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-emerald-100 bg-emerald-50/50`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                  </svg>
+                  <span className="text-[8px] font-black uppercase tracking-tighter text-emerald-600">
+                    START: {formatStart(todo.start_time, todo.inserted_at)}
+                  </span>
+                </div>
+              )}
 
               {todo.deadline && (
                 <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border transition-colors ${
