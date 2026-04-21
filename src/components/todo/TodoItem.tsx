@@ -25,6 +25,21 @@ export const TodoItem = ({ todo, onToggle, onDelete, onRename }: any) => {
     else setText(todo.task)
   }
 
+  const isNow = (start: string, end: string) => {
+    if (!start || !end) return false;
+    
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+
+    const [sHours, sMinutes] = start.split(':').map(Number);
+    const [eHours, eMinutes] = end.split(':').map(Number);
+    
+    const startTime = sHours * 60 + sMinutes;
+    const endTime = eHours * 60 + eMinutes;
+
+    return currentTime >= startTime && currentTime < endTime;
+  };
+
   const pStyle = {
     High: 'border-r-rose-500 shadow-[0_10px_30px_-15px_rgba(244,63,94,0.15)]',
     Medium: 'border-r-emerald-500',
