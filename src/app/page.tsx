@@ -286,11 +286,7 @@ export default function Home() {
                   todo={todo} 
                   onToggle={handleToggle} 
                   onDelete={handleDelete} 
-                  onEdit={(t: any) => {
-                    // Sementara arahkan ke handleRename dulu agar tidak error, 
-                    // atau set state modal editmu di sini nanti.
-                    handleRename(t.id, t.task); 
-                  }} 
+                  onEdit={(t: any) => setEditingTodo(t)} 
                 />
               ))}
           </div>
@@ -300,8 +296,15 @@ export default function Home() {
       <TodoForm 
         isOpen={!!editingTodo} 
         onClose={() => setEditingTodo(null)} 
-        onAdd={handleUpdate} // Fungsi update
+        onAdd={(data: any) => handleUpdate(editingTodo.id, data)} // Gunakan fungsi update kita tadi
         initialData={editingTodo} // Data lama untuk isi form otomatis
+      />
+
+      {/* MODAL TAMBAH (Tetap seperti biasa) */}
+      <TodoForm 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onAdd={handleAdd} // Pakai fungsi tambah biasa
       />
       
       <button onClick={() => setIsModalOpen(true)} className="fixed bottom-6 right-6 w-12 h-12 bg-slate-900 text-white rounded-xl shadow-xl flex items-center justify-center z-30 md:hidden active:scale-90 transition-transform">

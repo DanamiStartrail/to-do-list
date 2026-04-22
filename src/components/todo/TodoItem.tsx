@@ -87,12 +87,6 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
         </h3>
         
         <div className="flex items-center gap-2 flex-wrap">
-          {active && (
-            <span className="flex items-center gap-1 text-[8px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full tracking-widest animate-bounce">
-              ON PROGRESS
-            </span>
-          )}
-
           {todo.category && <span className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-400">{todo.category}</span>}
           
           <span className="text-[8px] font-bold text-slate-300 uppercase tracking-tighter">• {formatTimeAgo(todo.inserted_at)}</span>
@@ -128,6 +122,12 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
             <button onClick={() => setShowDesc(!showDesc)} className={`text-[9px] font-bold transition-all ${showDesc ? 'text-emerald-600' : 'text-emerald-400'}`}>
               • {showDesc ? 'Hide Note' : 'See Note'}
             </button>
+          )}
+
+          {active && (
+            <span className="flex items-center gap-1 text-[8px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full tracking-widest animate-bounce">
+              ON PROGRESS
+            </span>
           )}
         </div>
 

@@ -235,25 +235,30 @@ export const useTodoLogic = () => {
   }
 
   const handleUpdate = async (id: string, updatedData: any) => {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Pastikan format deadline tetap ISO String
+    const finalDeadline = updatedData.deadline ? new Date(updatedData.deadline).toISOString() : null;
+
     const { error } = await supabase
       .from('todos')
       .update({
         task: updatedData.task,
         category: updatedData.category,
         priority: updatedData.priority,
-        description: updatedData.description,
-        start_time: updatedData.start_time,
-        deadline: updatedData.deadline ? new Date(updatedData.deadline).toISOString() : null,
         is_daily: updatedData.is_daily,
-        repeat_days: updatedData.repeat_days
+        deadline: finalDeadline,
+        start_time: updatedData.start_time,
+        repeat_days: updatedData.repeat_days,
+        description: updatedData.description
       })
       .eq('id', id);
 
     if (!error) {
-      // Refresh data lokal
-      setTodos(prev => prev.map(t => t.id === id ? { ...t, ...updatedData } : t));
+      // Sync state lokal agar UI berubah tanpa refresh
+      setTodos(prev => prev.map(t => t.id === id ? { ...t, ...updatedData, deadline: finalDeadline } : t));
     } else {
-      console.error("Update error:", error.message);
+      console.error("Update failed:", error.message);
     }
   };
 
