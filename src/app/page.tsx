@@ -260,7 +260,7 @@ export default function Home() {
               l: 'On Progress', 
               v: stats.onProgress, 
               c: 'text-emerald-600 bg-emerald-50 border-emerald-100' 
-            },{ l: 'Urgent', v: stats.urgent, c: 'text-rose-600 bg-rose-50 border-rose-100' }, { l: 'ITERA', v: stats.itera, c: 'text-emerald-600 bg-emerald-50 border-emerald-100' }, { l: 'Done', v: stats.done, c: 'text-slate-500 bg-slate-50 border-slate-100' }].map((s, i) => (
+            },{ l: 'Urgent', v: stats.urgent, c: 'text-rose-600 bg-rose-50 border-rose-100' }, { l: 'ITERA', v: stats.Kuliah, c: 'text-emerald-600 bg-emerald-50 border-emerald-100' }, { l: 'Done', v: stats.done, c: 'text-slate-500 bg-slate-50 border-slate-100' }].map((s, i) => (
               <div key={i} className={`flex items-center gap-2.5 px-4 py-2 rounded-full border shadow-sm ${s.c || 'bg-white border-slate-100 text-slate-900'}`}>
                 <span className="text-[10px] font-black uppercase opacity-60">{s.l}</span>
                 <span className="text-sm font-black">{s.v}</span>
