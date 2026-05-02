@@ -97,7 +97,7 @@ export const useTodoLogic = () => {
       user_id: userId,
       total_done: completedTasks.length,
       Kuliah_count: completedTasks.filter(t => t.category === 'Kuliah').length,
-      pribadi_count: completedTasks.filter(t => t.category === 'PRIBADI').length,
+      Pribadi_count: completedTasks.filter(t => t.category === 'Pribadi').length,
       Work_count: completedTasks.filter(t => t.category === 'Work').length,
       week_range: `Minggu ke-${Math.ceil(new Date().getDate() / 7)} ${new Date().toLocaleString('id-ID', { month: 'long' })}`
     };
