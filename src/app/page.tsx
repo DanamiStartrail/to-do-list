@@ -304,7 +304,7 @@ export default function Home() {
       <TodoForm 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        onAdd={handleAdd} // Pakai fungsi tambah biasa
+        onAdd={handleAdd}
       />
       
       <button onClick={() => setIsModalOpen(true)} className="fixed bottom-6 right-6 w-12 h-12 bg-slate-900 text-white rounded-xl shadow-xl flex items-center justify-center z-30 md:hidden active:scale-90 transition-transform">
