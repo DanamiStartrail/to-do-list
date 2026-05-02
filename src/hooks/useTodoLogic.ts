@@ -96,7 +96,7 @@ export const useTodoLogic = () => {
     const report = {
       user_id: userId,
       total_done: completedTasks.length,
-      itera_count: completedTasks.filter(t => t.category === 'ITERA').length,
+      Kuliah_count: completedTasks.filter(t => t.category === 'Kuliah').length,
       pribadi_count: completedTasks.filter(t => t.category === 'PRIBADI').length,
       project_count: completedTasks.filter(t => t.category === 'PROJECT').length,
       week_range: `Minggu ke-${Math.ceil(new Date().getDate() / 7)} ${new Date().toLocaleString('id-ID', { month: 'long' })}`
@@ -339,7 +339,7 @@ export const useTodoLogic = () => {
     return {
       pending: todos.filter(t => !t.is_completed).length,
       urgent: todos.filter(t => t.priority === 'High' && !t.is_completed).length,
-      itera: todos.filter(t => t.category === 'ITERA' && !t.is_completed).length,
+      Kuliah: todos.filter(t => t.category === 'Kuliah' && !t.is_completed).length,
       done: todos.filter(t => t.is_completed).length,
       overdue: todos.filter(t => t.deadline && !t.is_completed && new Date(t.deadline).getTime() < now).length,
       onProgress: todos.filter(t => checkActive(t)).length // <-- Tambahan

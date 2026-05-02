@@ -82,7 +82,7 @@ export const TodoForm = ({ isOpen, onClose, onAdd, initialData = null }: any) =>
             <div className="space-y-2">
               <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Workspace</label>
               <div className="flex gap-1.5 flex-wrap">
-                {['Pribadi', 'ITERA', 'Project'].map(cat => (
+                {['Pribadi', 'Kuliah', 'Project'].map(cat => (
                   <button key={cat} type="button" onClick={() => setCategory(cat)} className={`px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase transition-all ${category === cat ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>{cat}</button>
                 ))}
               </div>
