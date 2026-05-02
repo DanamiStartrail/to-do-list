@@ -78,7 +78,7 @@ export default function Home() {
 
             <div className="space-y-1">
               <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] ml-3 mb-3">Workspaces</p>
-              {['Pribadi', 'ITERA', 'Project'].map((cat) => {
+              {['Pribadi', 'Kuliah', 'Project'].map((cat) => {
                 const prog = getCategoryProgress(cat), isActive = filter === cat;
                 return (
                   <button key={cat} onClick={() => setFilter(cat)} className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-[10px] font-bold uppercase transition-all ${isActive ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'}`}>
