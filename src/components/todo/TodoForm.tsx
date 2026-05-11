@@ -48,7 +48,7 @@ export const TodoForm = ({ isOpen, onClose, onAdd, initialData = null }: any) =>
   const handleSubmit = () => {
     if (!newTask.trim()) return;
 
-    // Pastikan parameter dikirim sesuai urutan yang diharapkan handleAdd atau handleUpdate
+    // Sinkronisasi pengiriman parameter ke page.tsx
     onAdd(newTask, category, priority, isDaily, deadline, selectedDays, description, startTime);
     
     onClose();
@@ -82,7 +82,8 @@ export const TodoForm = ({ isOpen, onClose, onAdd, initialData = null }: any) =>
             <div className="space-y-2">
               <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Workspace</label>
               <div className="flex gap-1.5 flex-wrap">
-                {['Pribadi', 'Kuliah', 'Project'].map(cat => (
+                {/* Update kategori agar sinkron dengan Database: Pribadi, ITERA, Project */}
+                {['Pribadi', 'ITERA', 'Project'].map(cat => (
                   <button key={cat} type="button" onClick={() => setCategory(cat)} className={`px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase transition-all ${category === cat ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>{cat}</button>
                 ))}
               </div>

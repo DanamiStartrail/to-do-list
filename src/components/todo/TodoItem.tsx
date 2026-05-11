@@ -5,7 +5,7 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
   const [showDesc, setShowDesc] = useState(false)
   const [, setTick] = useState(0)
 
-  // Force re-render setiap menit untuk update status On Progress
+  // Force re-render setiap menit untuk update status On Progress & Overdue secara real-time
   useEffect(() => {
     const timer = setInterval(() => setTick(prev => prev + 1), 60000)
     return () => clearInterval(timer)
@@ -13,6 +13,7 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
 
   // --- HELPERS ---
   const formatTimeAgo = (dateStr: string) => {
+    if (!dateStr) return '';
     const created = new Date(dateStr);
     const now = new Date();
     const diffInSec = Math.floor((now.getTime() - created.getTime()) / 1000);
@@ -26,6 +27,9 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
     if (!timeStr) return '';
     const d = new Date(insertedAt);
     const [hours, minutes] = timeStr.split(':');
+    
+    if (todo.is_daily) return `Everyday, ${hours}:${minutes}`;
+    
     const isToday = d.toDateString() === new Date().toDateString();
     return `${isToday ? 'Today' : d.getDate() + ' ' + d.toLocaleString('id-ID', { month: 'short' })}, ${hours}:${minutes}`;
   };
@@ -35,7 +39,7 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
     const d = new Date(dateStr);
     const time = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
     
-    // Jika daily, tampilkan jam saja tanpa tanggal yang sudah lewat
+    // Jika daily, tampilkan jam saja agar UI tetap bersih setiap harinya
     if (todo.is_daily) return `Daily at ${time}`;
     
     const isToday = d.toDateString() === new Date().toDateString();
@@ -44,17 +48,38 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
 
   const isNow = (start: string | null, end: string | null) => {
     if (!start || !end || todo.is_completed) return false;
-    const now = new Date().getTime();
-    const startDate = new Date(todo.inserted_at); 
+    
+    const now = new Date();
+    const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
+    
     const [sHours, sMinutes] = start.split(':').map(Number);
-    startDate.setHours(sHours, sMinutes, 0, 0);
-    const endDate = new Date(end).getTime();
-    return now >= startDate.getTime() && now <= endDate;
+    const startTotalMinutes = sHours * 60 + sMinutes;
+    
+    const endDate = new Date(end);
+    const endTotalMinutes = endDate.getHours() * 60 + endDate.getMinutes();
+
+    // Logika On Progress: Cek apakah waktu sekarang berada di antara jam mulai dan jam selesai
+    return currentTotalMinutes >= startTotalMinutes && currentTotalMinutes <= endTotalMinutes;
   };
 
   // --- LOGIC STATES ---
   const active = isNow(todo.start_time, todo.deadline);
-  const isOverdue = todo.deadline && !todo.is_completed && new Date(todo.deadline) < new Date();
+  
+  // Smart Overdue: Daily task hanya overdue jika lewat jamnya DI HARI YANG SAMA
+  const checkOverdue = () => {
+    if (!todo.deadline || todo.is_completed) return false;
+    const now = new Date();
+    const deadlineDate = new Date(todo.deadline);
+
+    if (todo.is_daily) {
+      const currentMin = now.getHours() * 60 + now.getMinutes();
+      const deadlineMin = deadlineDate.getHours() * 60 + deadlineDate.getMinutes();
+      return currentMin > deadlineMin;
+    }
+    return now > deadlineDate;
+  };
+
+  const isOverdue = checkOverdue();
 
   // --- STYLES ---
   const pStyle = {
@@ -84,11 +109,20 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
 
       {/* 2. Content */}
       <div className="flex-1 min-w-0">
-        <h3 className={`text-sm font-bold tracking-tight mb-1 transition-colors ${
-          todo.is_completed ? 'text-slate-300 line-through' : active ? 'text-emerald-900' : 'text-slate-700'
-        }`}>
-          {todo.task}
-        </h3>
+        <div className="flex justify-between items-start">
+          <h3 className={`text-sm font-bold tracking-tight mb-1 transition-colors ${
+            todo.is_completed ? 'text-slate-300 line-through' : active ? 'text-emerald-900' : 'text-slate-700'
+          }`}>
+            {todo.task}
+          </h3>
+          
+          {/* BADGE ON PROGRESS DI KANAN */}
+          {active && (
+            <span className="flex items-center gap-1 text-[8px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full tracking-widest animate-pulse ml-2 flex-shrink-0">
+              ON PROGRESS
+            </span>
+          )}
+        </div>
         
         <div className="flex items-center gap-2 flex-wrap">
           {todo.category && <span className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-400">{todo.category}</span>}
@@ -126,12 +160,6 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
             <button onClick={() => setShowDesc(!showDesc)} className={`text-[9px] font-bold transition-all ${showDesc ? 'text-emerald-600' : 'text-emerald-400'}`}>
               • {showDesc ? 'Hide Note' : 'See Note'}
             </button>
-          )}
-
-          {active && (
-            <span className="flex items-center gap-1 text-[8px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full tracking-widest animate-bounce">
-              ON PROGRESS
-            </span>
           )}
         </div>
 

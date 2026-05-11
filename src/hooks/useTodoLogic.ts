@@ -32,13 +32,12 @@ export const useTodoLogic = () => {
   const [pomodoroMode, setPomodoroMode] = useState<'Work' | 'Break'>('Work');
   const [userId, setUserId] = useState<string | null>(null);
   
-  
-
   // Helper Sync
   const sync = useCallback((updated: any[]) => { 
     setTodos(updated); 
     localStorage.setItem('raven_todos', JSON.stringify(updated));
   }, []);
+
   // Helper untuk putar suara
   const playPomoSound = (file: string) => {
     const audio = new Audio(`/${file}`);
@@ -46,7 +45,7 @@ export const useTodoLogic = () => {
     audio.play().catch(e => console.log("Audio play blocked"));
   };
 
-  // --- FUNGSI RESET DAILY ---
+  // --- FUNGSI RESET DAILY (SINKRON DENGAN DATABASE) ---
   const checkAndResetDaily = useCallback(async (currentTodos: any[]) => {
     const today = new Date().toLocaleDateString('id-ID');
     const lastReset = localStorage.getItem('raven_last_reset');
@@ -96,9 +95,9 @@ export const useTodoLogic = () => {
     const report = {
       user_id: userId,
       total_done: completedTasks.length,
-      Kuliah_count: completedTasks.filter(t => t.category === 'Kuliah').length,
+      Kuliah_count: completedTasks.filter(t => t.category === 'ITERA').length, // Diupdate ke ITERA
       Pribadi_count: completedTasks.filter(t => t.category === 'Pribadi').length,
-      Work_count: completedTasks.filter(t => t.category === 'Work').length,
+      Work_count: completedTasks.filter(t => t.category === 'Project').length, // Diupdate ke Project
       week_range: `Minggu ke-${Math.ceil(new Date().getDate() / 7)} ${new Date().toLocaleString('id-ID', { month: 'long' })}`
     };
 
@@ -111,17 +110,16 @@ export const useTodoLogic = () => {
       return alert("Gagal membuat laporan mingguan.");
     }
 
-    // 4. Proses penghapusan
     const { error: deleteError } = await supabase
       .from('todos')
       .delete()
       .eq('user_id', userId)       
       .eq('is_completed', true)
-      .is('repeat_days', null);     
+      .eq('is_daily', false); // Proteksi agar Daily Task tidak terhapus saat arsip
 
     if (deleteError) {
       console.error("Gagal hapus data:", deleteError.message);
-      return alert("Laporan tersimpan, tapi data lama gagal dihapus. Cek Policy DELETE di Supabase.");
+      return alert("Laporan tersimpan, tapi data lama gagal dihapus.");
     }
     alert("Laporan berhasil dibuat dan database telah dibersihkan!");
     await fetchTodos(userId); 
@@ -168,6 +166,7 @@ export const useTodoLogic = () => {
         setPomodoroTime(5 * 60);
       } else {
         playPomoSound('stop-sound.wav');
+        setPomodoroMode('Work');
         setPomodoroTime(25 * 60);
       }
     }
@@ -189,7 +188,6 @@ export const useTodoLogic = () => {
   // Actions
   const handleAdd = async (task: string, category: string, priority: string, is_daily: boolean, deadline: string | null, repeat_days: string[], description: string, start_time: string | null) => {
     const { data: { user } } = await supabase.auth.getUser()
-    // Ganti ke ISOString agar anti-ngawur deadlinenya
     const finalDeadline = deadline ? new Date(deadline).toISOString() : null;
     
     const { data, error } = await supabase.from('todos').insert([{ 
@@ -199,28 +197,13 @@ export const useTodoLogic = () => {
   }
 
   const handleToggle = useCallback(async (id: string, is_comp: boolean) => {
-    // 1. UPDATE LOKAL SECEPAT KILAT
-    // Kita langsung ubah state 'todos' tanpa nunggu server
     const updated = todos.map(t => t.id === id ? { ...t, is_completed: !is_comp } : t);
-    
-    // Langsung simpan ke state dan localStorage
     setTodos(updated);
     localStorage.setItem('raven_todos', JSON.stringify(updated));
 
-    // 2. SINKRONISASI KE SUPABASE (DI BACKGROUND)
-    const { error } = await supabase
-      .from('todos')
-      .update({ is_completed: !is_comp })
-      .eq('id', id);
-
-    // 3. HANDLING JIKA GAGAL (ROLLBACK)
-    if (error) {
-      console.error("Gagal sinkron:", error.message);
-      // Kalau internet mati atau server error, kita tarik ulang data asli agar UI sinkron kembali
-      if (userId) fetchTodos(userId); 
-      alert("Gagal memperbarui status tugas di server.");
-    }
-  }, [todos, userId, fetchTodos]); // Tambahkan userId dan fetchTodos ke dependency
+    const { error } = await supabase.from('todos').update({ is_completed: !is_comp }).eq('id', id);
+    if (error && userId) fetchTodos(userId); 
+  }, [todos, userId, fetchTodos]);
 
   const handleRename = useCallback(async (id: string, text: string) => {
     if (text.trim() && !(await supabase.from('todos').update({ task: text }).eq('id', id)).error) {
@@ -234,50 +217,23 @@ export const useTodoLogic = () => {
       sync(todos.filter(t => t.id !== id));
   }
 
-  // Tambahkan fungsi ini di dalam hook useTodoLogic
-const handleUpdate = async (id: string, updatedData: any) => {
-  const { error } = await supabase
-    .from('todos')
-    .update({
-      task: updatedData.task,
-      category: updatedData.category,
-      priority: updatedData.priority,
-      is_daily: updatedData.is_daily,
-      deadline: updatedData.deadline ? new Date(updatedData.deadline).toISOString() : null,
-      start_time: updatedData.start_time,
-      repeat_days: updatedData.repeat_days,
-      description: updatedData.description
-    })
-    .eq('id', id);
+  // --- FIX: HANDLEUPDATE DISINKRONKAN DENGAN PAGE.TSX ---
+  const handleUpdate = async (id: string, task: string, category: string, priority: string, is_daily: boolean, deadline: string | null, repeat_days: string[], description: string, start_time: string | null) => {
+    const finalDeadline = deadline ? new Date(deadline).toISOString() : null;
+    const { error } = await supabase
+      .from('todos')
+      .update({
+        task, category, priority, is_daily,
+        deadline: finalDeadline,
+        start_time, repeat_days, description
+      })
+      .eq('id', id);
 
-  if (!error) {
-    setTodos(prev => prev.map(t => t.id === id ? { ...t, ...updatedData } : t));
-  }
-};
-
-  // Logika Midnight Reset (Tanamkan di useEffect yang memantau waktu)
-  useEffect(() => {
-    const checkAndResetDaily = async () => {
-      const lastReset = localStorage.getItem('last_reset_date');
-      const today = new Date().toDateString();
-
-      if (lastReset !== today) {
-        const { error } = await supabase
-          .from('todos')
-          .update({ is_completed: false })
-          .eq('is_daily', true);
-
-        if (!error) {
-          localStorage.setItem('last_reset_date', today);
-          // Refresh data lokal
-          const { data } = await supabase.from('todos').select('*');
-          if (data) setTodos(data);
-        }
-      }
-    };
-
-    checkAndResetDaily();
-  }, []);
+    if (!error) {
+      const updated = todos.map(t => t.id === id ? { ...t, task, category, priority, is_daily, deadline: finalDeadline, start_time, repeat_days, description } : t);
+      sync(updated);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -291,15 +247,15 @@ const handleUpdate = async (id: string, updatedData: any) => {
   };
 
   const filteredTodos = useMemo(() => {
-    // Helper Internal untuk cek status Active/On Progress
     const checkActive = (t: any) => {
       if (!t.start_time || !t.deadline || t.is_completed) return false;
-      const now = new Date().getTime();
-      const startDate = new Date(t.inserted_at);
-      const [h, m] = t.start_time.split(':').map(Number);
-      startDate.setHours(h, m, 0, 0);
-      const endDate = new Date(t.deadline).getTime();
-      return now >= startDate.getTime() && now <= endDate;
+      const now = new Date();
+      const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
+      const [sh, sm] = t.start_time.split(':').map(Number);
+      const startTotalMinutes = sh * 60 + sm;
+      const d = new Date(t.deadline);
+      const endTotalMinutes = d.getHours() * 60 + d.getMinutes();
+      return currentTotalMinutes >= startTotalMinutes && currentTotalMinutes <= endTotalMinutes;
     };
 
     const priorityWeight: any = { High: 3, Medium: 2, Low: 1 };
@@ -313,9 +269,7 @@ const handleUpdate = async (id: string, updatedData: any) => {
         return t.category === filter;
       })
       .sort((a, b) => {
-        // 1. Yang sudah selesai selalu di paling bawah
         if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1;
-
         if (!a.is_completed) {
           const now = new Date().getTime();
           const aOverdue = a.deadline && new Date(a.deadline).getTime() < now;
@@ -323,50 +277,45 @@ const handleUpdate = async (id: string, updatedData: any) => {
           const aActive = checkActive(a);
           const bActive = checkActive(b);
 
-          // --- LEVEL 1: OVERDUE ---
           if (aOverdue && !bOverdue) return -1;
           if (!aOverdue && bOverdue) return 1;
-
-          // --- LEVEL 2: ON PROGRESS ---
           if (aActive && !bActive) return -1;
           if (!aActive && bActive) return 1;
-
-          // --- LEVEL 3: PRIORITY (Jika status sama-sama overdue/active/normal) ---
           if (priorityWeight[b.priority] !== priorityWeight[a.priority]) {
             return priorityWeight[b.priority] - priorityWeight[a.priority];
           }
         }
-
-        // --- LEVEL 4: TERBARU ---
         return new Date(b.inserted_at).getTime() - new Date(a.inserted_at).getTime();
       });
   }, [todos, filter, todayName]);
 
   const stats = useMemo(() => {
-    const now = new Date().getTime();
-    
+    const now = new Date();
+    const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
+
     const checkActive = (t: any) => {
       if (!t.start_time || !t.deadline || t.is_completed) return false;
-      const startDate = new Date(t.inserted_at);
-      const [h, m] = t.start_time.split(':').map(Number);
-      startDate.setHours(h, m, 0, 0);
-      return now >= startDate.getTime() && now <= new Date(t.deadline).getTime();
+      const [sh, sm] = t.start_time.split(':').map(Number);
+      const startTotalMinutes = sh * 60 + sm;
+      const d = new Date(t.deadline);
+      const endTotalMinutes = d.getHours() * 60 + d.getMinutes();
+      return currentTotalMinutes >= startTotalMinutes && currentTotalMinutes <= endTotalMinutes;
     };
 
     return {
       pending: todos.filter(t => !t.is_completed).length,
       urgent: todos.filter(t => t.priority === 'High' && !t.is_completed).length,
-      Kuliah: todos.filter(t => t.category === 'Kuliah' && !t.is_completed).length,
+      ITERA: todos.filter(t => t.category === 'ITERA' && !t.is_completed).length,
       done: todos.filter(t => t.is_completed).length,
-      overdue: todos.filter(t => t.deadline && !t.is_completed && new Date(t.deadline).getTime() < now).length,
-      onProgress: todos.filter(t => checkActive(t)).length // <-- Tambahan
+      overdue: todos.filter(t => t.deadline && !t.is_completed && new Date(t.deadline).getTime() < now.getTime()).length,
+      onProgress: todos.filter(t => checkActive(t)).length 
     };
   }, [todos]);
 
   return {
     filter, setFilter, loading, showInstallBtn, currentTime, isModalOpen, mounted,
     activeQuote, userName, filteredTodos, stats, isSidebarOpen, getCategoryProgress,
-    setIsSidebarOpen, setIsModalOpen, handleInstallClick: async () => {}, // placeholder
+    setIsSidebarOpen, setIsModalOpen, handleInstallClick: async () => {}, 
     handleAdd, handleRename, handleToggle, handleDelete, handleLogout, pomodoroTime, isPomodoroRunning, pomodoroMode, 
     togglePomodoro, setPomodoroTime, setPomodoroMode, formatPomoTime, archiveWeeklyTask, handleUpdate
   }

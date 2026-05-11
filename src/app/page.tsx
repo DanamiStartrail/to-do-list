@@ -23,7 +23,7 @@ export default function Home() {
     if (loading) return "Syncing protocols...";
     if (stats.urgent > 0) return `Caution: ${stats.urgent} urgent tasks detected.`;
     if (stats.pending === 0) return "Systems clear. Great job, Danta!";
-    return filter !== 'Semua' ? `Workspace: ${filter}` : "Ready for today's objectives?";
+    return filter !== 'Semua' ? `Projectspace: ${filter}` : "Ready for today's objectives?";
   };
 
   const [editingTodo, setEditingTodo] = useState<any>(null);
@@ -55,7 +55,7 @@ export default function Home() {
              </div>
           </div>
 
-          <button onClick={() => setIsModalOpen(true)} className="w-full flex items-center gap-2.5 bg-emerald-500 text-white px-4 py-3 rounded-xl font-bold text-[10px] tracking-widest uppercase hover:bg-slate-900 transition-all mb-8 shadow-md shadow-emerald-500/10 group">
+          <button onClick={() => { setEditingTodo(null); setIsModalOpen(true); }} className="w-full flex items-center gap-2.5 bg-emerald-500 text-white px-4 py-3 rounded-xl font-bold text-[10px] tracking-widest uppercase hover:bg-slate-900 transition-all mb-8 shadow-md shadow-emerald-500/10 group">
             <div className="bg-white/20 p-1 rounded-md group-hover:rotate-90 transition-all">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             </div>
@@ -78,8 +78,8 @@ export default function Home() {
             </div>
 
             <div className="space-y-1">
-              <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] ml-3 mb-3">Workspaces</p>
-              {['Pribadi', 'Kuliah', 'Work'].map((cat) => {
+              <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] ml-3 mb-3">Projectspaces</p>
+              {['Pribadi', 'ITERA', 'Project'].map((cat) => {
                 const prog = getCategoryProgress(cat), isActive = filter === cat;
                 return (
                   <button key={cat} onClick={() => setFilter(cat)} className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-[10px] font-bold uppercase transition-all ${isActive ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'}`}>
@@ -261,7 +261,7 @@ export default function Home() {
               l: 'On Progress', 
               v: stats.onProgress, 
               c: 'text-emerald-600 bg-emerald-50 border-emerald-100' 
-            },{ l: 'Urgent', v: stats.urgent, c: 'text-rose-600 bg-rose-50 border-rose-100' }, { l: 'Kuliah', v: stats.Kuliah, c: 'text-emerald-600 bg-emerald-50 border-emerald-100' }, { l: 'Done', v: stats.done, c: 'text-slate-500 bg-slate-50 border-slate-100' }].map((s, i) => (
+            },{ l: 'Urgent', v: stats.urgent, c: 'text-rose-600 bg-rose-50 border-rose-100' }, { l: 'ITERA', v: stats.ITERA, c: 'text-emerald-600 bg-emerald-50 border-emerald-100' }, { l: 'Done', v: stats.done, c: 'text-slate-500 bg-slate-50 border-slate-100' }].map((s, i) => (
               <div key={i} className={`flex items-center gap-2.5 px-4 py-2 rounded-full border shadow-sm ${s.c || 'bg-white border-slate-100 text-slate-900'}`}>
                 <span className="text-[10px] font-black uppercase opacity-60">{s.l}</span>
                 <span className="text-sm font-black">{s.v}</span>
@@ -287,31 +287,33 @@ export default function Home() {
                     todo={todo} 
                     onToggle={handleToggle} 
                     onDelete={handleDelete} 
-                    onEdit={(t: any) => setEditingTodo(t)} // Klik pensil = set data ke state
+                    onEdit={(t: any) => { setEditingTodo(t); setIsModalOpen(true); }} // Klik pensil = set data ke state & buka modal
                   />
                 ))}
           </div>
         </div>
       </section>
 
+      {/* --- SINGLE MODAL DENGAN PENUTUP YANG BENAR --- */}
       <TodoForm 
-        isOpen={!!editingTodo} 
-        onClose={() => setEditingTodo(null)} 
-        onAdd={(data: any) => {
-          handleUpdate(editingTodo.id, data);
+        isOpen={isModalOpen || !!editingTodo} 
+        onClose={() => {
+          setIsModalOpen(false);
           setEditingTodo(null);
         }} 
-        initialData={editingTodo} 
-      />
-
-      {/* MODAL TAMBAH (Tetap seperti biasa) */}
-      <TodoForm 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onAdd={handleAdd}
+        onAdd={(task: string, cat: string, prio: string, daily: boolean, dl: string, days: string[], desc: string, start: string) => {
+          if (editingTodo) {
+            handleUpdate(editingTodo.id, task, cat, prio, daily, dl, days, desc, start);
+          } else {
+            handleAdd(task, cat, prio, daily, dl, days, desc, start);
+          }
+          setEditingTodo(null);
+          setIsModalOpen(false);
+        }}
+        initialData={editingTodo}
       />
       
-      <button onClick={() => setIsModalOpen(true)} className="fixed bottom-6 right-6 w-12 h-12 bg-slate-900 text-white rounded-xl shadow-xl flex items-center justify-center z-30 md:hidden active:scale-90 transition-transform">
+      <button onClick={() => { setEditingTodo(null); setIsModalOpen(true); }} className="fixed bottom-6 right-6 w-12 h-12 bg-slate-900 text-white rounded-xl shadow-xl flex items-center justify-center z-30 md:hidden active:scale-90 transition-transform">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
       </button>
     </main>
