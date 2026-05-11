@@ -16,7 +16,7 @@ export default function Home() {
   const getGreeting = () => {
     if (!mounted) return 'Loading';
     const h = currentTime.getHours();
-    return h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening';
+    return h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Bay';
   };
 
   const getMsg = () => {
