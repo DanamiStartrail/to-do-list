@@ -33,8 +33,12 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
   const formatDL = (dateStr: string) => {
     if (!dateStr) return '';
     const d = new Date(dateStr);
-    const isToday = d.toDateString() === new Date().toDateString();
     const time = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+    
+    // Jika daily, tampilkan jam saja tanpa tanggal yang sudah lewat
+    if (todo.is_daily) return `Daily at ${time}`;
+    
+    const isToday = d.toDateString() === new Date().toDateString();
     return `${isToday ? 'Today' : d.getDate() + ' ' + d.toLocaleString('id-ID', { month: 'short' })}, ${time}`;
   };
 

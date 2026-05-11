@@ -27,6 +27,7 @@ export default function Home() {
   };
 
   const [editingTodo, setEditingTodo] = useState<any>(null);
+  
 
   return (
     <main className="min-h-screen bg-[#F8F9FA] flex relative font-sans overflow-hidden">
@@ -281,14 +282,14 @@ export default function Home() {
                 <h3 className="text-slate-900 font-black text-sm italic opacity-80 leading-relaxed">"{activeQuote}"</h3>
               </div>
             ) : filteredTodos.map(todo => (
-                <TodoItem 
-                  key={todo.id} 
-                  todo={todo} 
-                  onToggle={handleToggle} 
-                  onDelete={handleDelete} 
-                  onEdit={(t: any) => setEditingTodo(t)} 
-                />
-              ))}
+                  <TodoItem 
+                    key={todo.id} 
+                    todo={todo} 
+                    onToggle={handleToggle} 
+                    onDelete={handleDelete} 
+                    onEdit={(t: any) => setEditingTodo(t)} // Klik pensil = set data ke state
+                  />
+                ))}
           </div>
         </div>
       </section>
@@ -296,8 +297,11 @@ export default function Home() {
       <TodoForm 
         isOpen={!!editingTodo} 
         onClose={() => setEditingTodo(null)} 
-        onAdd={(data: any) => handleUpdate(editingTodo.id, data)} // Gunakan fungsi update kita tadi
-        initialData={editingTodo} // Data lama untuk isi form otomatis
+        onAdd={(data: any) => {
+          handleUpdate(editingTodo.id, data);
+          setEditingTodo(null);
+        }} 
+        initialData={editingTodo} 
       />
 
       {/* MODAL TAMBAH (Tetap seperti biasa) */}

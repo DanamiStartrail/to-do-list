@@ -234,33 +234,50 @@ export const useTodoLogic = () => {
       sync(todos.filter(t => t.id !== id));
   }
 
-  const handleUpdate = async (id: string, updatedData: any) => {
-    const { data: { user } } = await supabase.auth.getUser();
+  // Tambahkan fungsi ini di dalam hook useTodoLogic
+const handleUpdate = async (id: string, updatedData: any) => {
+  const { error } = await supabase
+    .from('todos')
+    .update({
+      task: updatedData.task,
+      category: updatedData.category,
+      priority: updatedData.priority,
+      is_daily: updatedData.is_daily,
+      deadline: updatedData.deadline ? new Date(updatedData.deadline).toISOString() : null,
+      start_time: updatedData.start_time,
+      repeat_days: updatedData.repeat_days,
+      description: updatedData.description
+    })
+    .eq('id', id);
 
-    // Pastikan format deadline tetap ISO String
-    const finalDeadline = updatedData.deadline ? new Date(updatedData.deadline).toISOString() : null;
+  if (!error) {
+    setTodos(prev => prev.map(t => t.id === id ? { ...t, ...updatedData } : t));
+  }
+};
 
-    const { error } = await supabase
-      .from('todos')
-      .update({
-        task: updatedData.task,
-        category: updatedData.category,
-        priority: updatedData.priority,
-        is_daily: updatedData.is_daily,
-        deadline: finalDeadline,
-        start_time: updatedData.start_time,
-        repeat_days: updatedData.repeat_days,
-        description: updatedData.description
-      })
-      .eq('id', id);
+  // Logika Midnight Reset (Tanamkan di useEffect yang memantau waktu)
+  useEffect(() => {
+    const checkAndResetDaily = async () => {
+      const lastReset = localStorage.getItem('last_reset_date');
+      const today = new Date().toDateString();
 
-    if (!error) {
-      // Sync state lokal agar UI berubah tanpa refresh
-      setTodos(prev => prev.map(t => t.id === id ? { ...t, ...updatedData, deadline: finalDeadline } : t));
-    } else {
-      console.error("Update failed:", error.message);
-    }
-  };
+      if (lastReset !== today) {
+        const { error } = await supabase
+          .from('todos')
+          .update({ is_completed: false })
+          .eq('is_daily', true);
+
+        if (!error) {
+          localStorage.setItem('last_reset_date', today);
+          // Refresh data lokal
+          const { data } = await supabase.from('todos').select('*');
+          if (data) setTodos(data);
+        }
+      }
+    };
+
+    checkAndResetDaily();
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
