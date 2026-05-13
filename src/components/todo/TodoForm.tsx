@@ -11,28 +11,19 @@ export const TodoForm = ({ isOpen, onClose, onAdd, initialData = null }: any) =>
   const [priority, setPriority] = useState('Medium');
   const [startTime, setStartTime] = useState("");
 
-  // Logic untuk mengisi data otomatis saat mode EDIT
   useEffect(() => {
     if (initialData && isOpen) {
       setNewTask(initialData.task || '');
       setCategory(initialData.category || 'Pribadi');
       setIsDaily(initialData.is_daily || false);
-      // Format deadline ke 'YYYY-MM-DDTHH:mm' agar terbaca oleh input datetime-local
       setDeadline(initialData.deadline ? new Date(initialData.deadline).toISOString().slice(0, 16) : '');
       setSelectedDays(initialData.repeat_days || []);
       setDescription(initialData.description || '');
       setPriority(initialData.priority || 'Medium');
       setStartTime(initialData.start_time || "");
     } else if (!initialData && isOpen) {
-      // Reset form jika modenya TAMBAH BARU
-      setNewTask('');
-      setCategory('Pribadi');
-      setIsDaily(false);
-      setDeadline('');
-      setSelectedDays([]);
-      setDescription('');
-      setPriority('Medium');
-      setStartTime('');
+      setNewTask(''); setCategory('Pribadi'); setIsDaily(false); setDeadline('');
+      setSelectedDays([]); setDescription(''); setPriority('Medium'); setStartTime('');
     }
   }, [initialData, isOpen]);
 
@@ -47,126 +38,108 @@ export const TodoForm = ({ isOpen, onClose, onAdd, initialData = null }: any) =>
 
   const handleSubmit = () => {
     if (!newTask.trim()) return;
-
-    // Sinkronisasi pengiriman parameter ke page.tsx
     onAdd(newTask, category, priority, isDaily, deadline, selectedDays, description, startTime);
-    
     onClose();
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={onClose} />
+      {/* Backdrop minimalis */}
+      <div className="absolute inset-0 bg-stone-900/20 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-xl bg-white p-6 md:p-8 rounded-[32px] shadow-2xl animate-fade-in-up">
+      <div className="relative w-full max-w-lg bg-white p-6 md:p-8 rounded-lg shadow-xl border border-stone-200">
+        
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-black text-slate-900 tracking-tight uppercase">
+          <h2 className="text-lg font-medium text-stone-900">
             {initialData ? 'Edit Task' : 'New Task'}
           </h2>
-          <button onClick={onClose} className="text-slate-300 hover:text-rose-500 transition-all">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          <button onClick={onClose} className="text-stone-400 hover:text-stone-800 transition-all">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
 
-        <div className="space-y-5">
+        <div className="space-y-6">
           {/* Main Input */}
           <input 
             autoFocus value={newTask} onChange={(e) => setNewTask(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            className="w-full bg-slate-50 border-none px-6 py-4 text-slate-800 placeholder:text-slate-300 outline-none text-lg font-medium rounded-2xl focus:ring-4 focus:ring-emerald-500/5 transition-all"
-            placeholder="Ketik tugas barumu..."
+            className="w-full bg-transparent border-b-2 border-stone-200 py-2 text-stone-800 placeholder:text-stone-400 outline-none text-xl focus:border-stone-800 transition-colors"
+            placeholder="What needs to be done?"
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            
+            {/* Kategori Flat */}
             <div className="space-y-2">
-              <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Workspace</label>
-              <div className="flex gap-1.5 flex-wrap">
-                {/* Update kategori agar sinkron dengan Database: Pribadi, ITERA, Project */}
+              <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Projectspace</label>
+              <div className="flex gap-2 flex-wrap">
                 {['Pribadi', 'ITERA', 'Project'].map(cat => (
-                  <button key={cat} type="button" onClick={() => setCategory(cat)} className={`px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase transition-all ${category === cat ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>{cat}</button>
+                  <button key={cat} type="button" onClick={() => setCategory(cat)} className={`px-3 py-1.5 rounded-md text-xs transition-all ${category === cat ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
+                    {cat}
+                  </button>
                 ))}
               </div>
             </div>
 
+            {/* Priority Flat */}
             <div className="space-y-2">
-              <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Time Settings</label>
+              <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Priority</label>
               <div className="flex gap-2">
-                <input 
-                  type="time" 
-                  value={startTime} 
-                  onChange={(e) => setStartTime(e.target.value)} 
-                  className="flex-1 bg-slate-50 border-none text-[10px] font-bold px-2 rounded-xl outline-none text-slate-600 cursor-pointer" 
-                />
-                <input 
-                  type="datetime-local" 
-                  value={deadline} 
-                  onChange={(e) => setDeadline(e.target.value)} 
-                  className="flex-1 bg-slate-50 border-none text-[9px] font-black uppercase px-2 rounded-xl outline-none text-slate-600 cursor-pointer" 
-                />
+                {['Low', 'Medium', 'High'].map((p) => (
+                  <button key={p} type="button" onClick={() => setPriority(p)} className={`flex-1 py-1.5 rounded-md text-xs border transition-all ${priority === p ? 'bg-stone-100 border-stone-800 text-stone-900 font-medium' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'}`}>
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Time & Daily Settings - Bordered Section */}
+          <div className="border border-stone-200 p-4 rounded-md space-y-4">
+            
+            <div className="flex items-center gap-3">
+              <input type="checkbox" id="dailyCheck" checked={isDaily} onChange={e => setIsDaily(e.target.checked)} className="w-4 h-4 rounded-[3px] border-stone-300 text-stone-800 focus:ring-stone-800" />
+              <label htmlFor="dailyCheck" className="text-sm text-stone-700 cursor-pointer">Set as Daily Routine</label>
+            </div>
+
+            <div className={`space-y-3 transition-all ${isDaily ? 'block' : 'hidden'}`}>
+              <div className="flex justify-between gap-1">
+                {days.map((day, idx) => (
+                  <button key={day} type="button" onClick={() => toggleDay(fullDays[idx])} className={`flex-1 py-1.5 rounded text-xs transition-all border ${selectedDays.includes(fullDays[idx]) ? 'bg-stone-200 text-stone-800 border-stone-300' : 'bg-white text-stone-400 border-stone-200'}`}>
+                    {day}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 pt-2">
+              <div className="space-y-1">
+                <label className="text-xs text-stone-500">Start Time</label>
+                <input type={isDaily ? "time" : "datetime-local"} value={startTime} onChange={(e) => setStartTime(e.target.value)} className="w-full bg-white border border-stone-200 text-sm px-2 py-1.5 rounded-md outline-none text-stone-700" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-stone-500">Deadline</label>
+                <input type={isDaily ? "time" : "datetime-local"} value={deadline} onChange={(e) => setDeadline(e.target.value)} className="w-full bg-white border border-stone-200 text-sm px-2 py-1.5 rounded-md outline-none text-stone-700" />
               </div>
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Priority_Rank</label>
-            <div className="flex gap-1.5 p-1 bg-slate-50 rounded-[18px] border border-slate-100/50">
-              {['Low', 'Medium', 'High'].map((p) => (
-                <button 
-                  key={p} type="button" onClick={() => setPriority(p)}
-                  className={`flex-1 py-2 rounded-[14px] text-[9px] font-black uppercase transition-all duration-200 ${
-                    priority === p 
-                      ? p === 'High' ? 'bg-rose-500 text-white' :
-                        p === 'Medium' ? 'bg-emerald-500 text-white' :
-                        'bg-slate-900 text-white'
-                      : 'text-slate-400 hover:bg-slate-100/50'
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 px-1">
-            <button 
-              type="button" 
-              onClick={() => setIsDaily(!isDaily)} 
-              className={`px-4 py-2 rounded-xl border text-[9px] font-black uppercase transition-all ${isDaily ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-slate-100 text-slate-400'}`}
-            >
-              Daily Repeat
-            </button>
-            <span className="text-[8px] text-slate-300 font-bold uppercase tracking-widest italic">
-              {isDaily ? 'Enabled' : 'Disabled'}
-            </span>
-          </div>
-
-          <div className={`space-y-2 transition-all duration-300 ${isDaily ? 'opacity-100 h-auto' : 'opacity-0 h-0 overflow-hidden'}`}>
-            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Repeat On</label>
-            <div className="flex justify-between gap-1">
-              {days.map((day, idx) => (
-                <button 
-                  key={day} type="button" onClick={() => toggleDay(fullDays[idx])}
-                  className={`flex-1 py-2 rounded-lg text-[9px] font-bold transition-all ${selectedDays.includes(fullDays[idx]) ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-transparent'} border`}
-                >
-                  {day}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Description</label>
+            <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Note</label>
             <textarea 
               value={description} onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-slate-50 border-none px-4 py-3 text-slate-700 placeholder:text-slate-300 outline-none text-xs font-medium rounded-xl h-20 resize-none"
-              placeholder="Tambahkan detail tugas..."
+              className="w-full bg-stone-50 border border-stone-200 px-3 py-2 text-stone-800 placeholder:text-stone-400 outline-none text-sm rounded-md h-20 resize-none focus:border-stone-400 transition-colors"
+              placeholder="Add extra details..."
             />
           </div>
 
-          <button onClick={handleSubmit} className="w-full bg-emerald-500 text-white py-4 rounded-[20px] font-black text-[10px] tracking-[0.2em] uppercase hover:bg-slate-900 transition-all shadow-lg shadow-emerald-500/10">
-            {initialData ? 'Save Changes' : 'Create Task'}
-          </button>
+          <div className="flex justify-end gap-3 pt-4 border-t border-stone-100">
+             <button onClick={onClose} className="px-4 py-2 text-sm text-stone-500 hover:text-stone-800 font-medium transition-colors">Cancel</button>
+             <button onClick={handleSubmit} className="px-6 py-2 bg-stone-800 text-white rounded-md text-sm font-medium hover:bg-stone-900 transition-colors">
+               {initialData ? 'Save' : 'Create'}
+             </button>
+          </div>
         </div>
       </div>
     </div>
