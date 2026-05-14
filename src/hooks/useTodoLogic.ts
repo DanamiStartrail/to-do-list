@@ -193,8 +193,11 @@ export const useTodoLogic = () => {
     const { data: { user } } = await supabase.auth.getUser()
     const finalDeadline = processDeadline(deadline);
     
+    // Konversi string kosong menjadi null agar Supabase tidak menolak data
+    const finalStartTime = start_time === "" ? null : start_time; 
+    
     const { data, error } = await supabase.from('todos').insert([{ 
-      task, category, priority, user_id: user?.id, is_daily, deadline: finalDeadline, start_time, repeat_days, description 
+      task, category, priority, user_id: user?.id, is_daily, deadline: finalDeadline, start_time: finalStartTime, repeat_days, description 
     }]).select()
     
     if (!error && data) sync([data[0], ...todos])
@@ -224,17 +227,21 @@ export const useTodoLogic = () => {
 
   const handleUpdate = async (id: string, task: string, category: string, priority: string, is_daily: boolean, deadline: string | null, repeat_days: string[], description: string, start_time: string | null) => {
     const finalDeadline = processDeadline(deadline);
+    
+    // Konversi string kosong menjadi null
+    const finalStartTime = start_time === "" ? null : start_time; 
+
     const { error } = await supabase
       .from('todos')
       .update({
         task, category, priority, is_daily,
         deadline: finalDeadline,
-        start_time, repeat_days, description
+        start_time: finalStartTime, repeat_days, description
       })
       .eq('id', id);
 
     if (!error) {
-      const updated = todos.map(t => t.id === id ? { ...t, task, category, priority, is_daily, deadline: finalDeadline, start_time, repeat_days, description } : t);
+      const updated = todos.map(t => t.id === id ? { ...t, task, category, priority, is_daily, deadline: finalDeadline, start_time: finalStartTime, repeat_days, description } : t);
       sync(updated);
     } else {
       console.error("Error Update:", error);
