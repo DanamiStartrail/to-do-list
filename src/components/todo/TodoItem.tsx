@@ -47,11 +47,14 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
   };
 
   const isNow = (start: string | null, end: string | null) => {
-    if (!start || !end || todo.is_completed) return false;
+    if (!start || todo.is_completed) return false;
     const now = new Date();
     const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
     const [sHours, sMinutes] = extractTime(start);
     const startTotalMinutes = sHours * 60 + sMinutes;
+    
+    if (!end) return currentTotalMinutes >= startTotalMinutes;
+
     const endDate = new Date(end);
     const endTotalMinutes = endDate.getHours() * 60 + endDate.getMinutes();
     return currentTotalMinutes >= startTotalMinutes && currentTotalMinutes <= endTotalMinutes;
@@ -78,7 +81,6 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
 
   return (
     <div className="group flex items-start gap-4 py-4 border-b border-stone-200 hover:bg-stone-100/50 transition-colors px-2">
-      
       <button 
         onClick={() => onToggle(todo.id, todo.is_completed)}
         className={`w-4 h-4 mt-1 rounded-[3px] border flex items-center justify-center flex-shrink-0 transition-colors ${
@@ -89,15 +91,12 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
       </button>
 
       <div className="flex-1 min-w-0">
-        
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => onEdit(todo)}>
             <div className={`w-1.5 h-1.5 rounded-full ${priorityColor}`} title={`Priority: ${todo.priority}`} />
-            
             <h3 className={`text-[15px] leading-tight ${todo.is_completed ? 'text-stone-400 line-through' : 'text-stone-800'}`}>
               {todo.task}
             </h3>
-            
             {active && (
               <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded ml-1">
                 On Progress
@@ -113,32 +112,27 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
         </div>
         
         <div className="flex items-center gap-4 mt-1.5 text-xs text-stone-500">
-          
           {todo.category && <span>{todo.category}</span>}
-          
           {(todo.start_time || todo.deadline) && (
             <div className={`flex items-center gap-1 ${isOverdue ? 'text-rose-500 font-medium' : ''}`}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               <span>
-                {todo.start_time ? formatStart(todo.start_time) + ' - ' : ''}
+                {todo.start_time ? formatStart(todo.start_time) + (todo.deadline ? ' - ' : '') : ''}
                 {todo.deadline ? formatDL(todo.deadline) : ''}
               </span>
             </div>
           )}
-
           {todo.is_daily && (
             <span className="flex items-center gap-1">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.92-10.44l5.36 5.36"/></svg>
               Daily
             </span>
           )}
-
           {todo.description && (
             <button onClick={() => setShowDesc(!showDesc)} className="text-stone-400 hover:text-stone-700 underline underline-offset-2 decoration-stone-200">
               {showDesc ? 'Hide Note' : 'Note'}
             </button>
           )}
-
           <span className="ml-auto text-[10px] text-stone-400">{formatTimeAgo(todo.inserted_at)}</span>
         </div>
 

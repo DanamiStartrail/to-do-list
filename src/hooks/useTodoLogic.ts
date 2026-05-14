@@ -13,15 +13,18 @@ const TECH_QUOTES = [
   "Commit often, perfect later."
 ]
 
+const FIXED_CATEGORIES = ['Pribadi', 'Kuliah', 'Study', 'Other'];
+
 export const useTodoLogic = () => {
   const [todos, setTodos] = useState<any[]>([])
+  const [customCategories, setCustomCategories] = useState<string[]>([])
   const [filter, setFilter] = useState('Semua')
   const [loading, setLoading] = useState(true)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [showInstallBtn, setShowInstallBtn] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
   const [activeQuote, setActiveQuote] = useState("")
-  const [userName, setUserName] = useState("User")
+  const [userName, setUserName] = useState("Danta")
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [mounted, setMounted] = useState(false) 
@@ -32,6 +35,8 @@ export const useTodoLogic = () => {
   const [pomodoroMode, setPomodoroMode] = useState<'Work' | 'Break'>('Work');
   const [userId, setUserId] = useState<string | null>(null);
   
+  const allCategories = [...FIXED_CATEGORIES, ...customCategories];
+
   const sync = useCallback((updated: any[]) => { 
     setTodos(updated); 
     localStorage.setItem('raven_todos', JSON.stringify(updated));
@@ -40,7 +45,7 @@ export const useTodoLogic = () => {
   const playPomoSound = (file: string) => {
     const audio = new Audio(`/${file}`);
     audio.volume = 0.5;
-    audio.play().catch(e => console.log("Audio play blocked"));
+    audio.play().catch(() => {});
   };
 
   const checkAndResetDaily = useCallback(async (currentTodos: any[]) => {
@@ -48,10 +53,7 @@ export const useTodoLogic = () => {
     const lastReset = localStorage.getItem('raven_last_reset');
 
     if (lastReset !== today) {
-      const dailyIds = currentTodos
-        .filter(t => t.is_daily && t.is_completed)
-        .map(t => t.id);
-
+      const dailyIds = currentTodos.filter(t => t.is_daily && t.is_completed).map(t => t.id);
       if (dailyIds.length > 0) {
         const { error } = await supabase.from('todos').update({ is_completed: false }).in('id', dailyIds);
         if (!error) {
@@ -68,13 +70,11 @@ export const useTodoLogic = () => {
   const togglePomodoro = () => {
     const nextState = !isPomodoroRunning;
     setIsPomodoroRunning(nextState);
-    if (nextState === true) {
-      playPomoSound('start-sound.wav'); 
-    }
+    if (nextState) playPomoSound('start-sound.wav'); 
   };
 
-  const fetchTodos = useCallback(async (userId: string) => {
-    const { data, error } = await supabase.from('todos').select('*').eq('user_id', userId)
+  const fetchTodos = useCallback(async (uid: string) => {
+    const { data, error } = await supabase.from('todos').select('*').eq('user_id', uid)
     if (!error && data) {
       const hasReset = await checkAndResetDaily(data);
       const finalData = hasReset ? data.map(t => t.is_daily ? { ...t, is_completed: false } : t) : data;
@@ -85,73 +85,58 @@ export const useTodoLogic = () => {
 
   const archiveWeeklyTask = async () => {
     if (!userId) return; 
-
     const completedTasks = todos.filter(t => t.is_completed);
     if (completedTasks.length === 0) return alert("Belum ada task yang selesai untuk diarsip.");
 
     const report = {
       user_id: userId,
       total_done: completedTasks.length,
-      Kuliah_count: completedTasks.filter(t => t.category === 'ITERA').length, 
+      Kuliah_count: completedTasks.filter(t => t.category === 'Kuliah').length, 
       Pribadi_count: completedTasks.filter(t => t.category === 'Pribadi').length,
-      Work_count: completedTasks.filter(t => t.category === 'Project').length, 
+      Work_count: completedTasks.filter(t => t.category === 'Study').length, 
       week_range: `Minggu ke-${Math.ceil(new Date().getDate() / 7)} ${new Date().toLocaleString('id-ID', { month: 'long' })}`
     };
 
     const { error: insertError } = await supabase.from('weekly_reports').insert([report]);
+    if (insertError) return alert("Gagal membuat laporan mingguan.");
 
-    if (insertError) {
-      return alert("Gagal membuat laporan mingguan.");
-    }
-
-    const { error: deleteError } = await supabase
-      .from('todos')
-      .delete()
-      .eq('user_id', userId)       
-      .eq('is_completed', true)
-      .eq('is_daily', false); 
-
-    if (deleteError) {
-      return alert("Laporan tersimpan, tapi data lama gagal dihapus.");
-    }
+    const { error: deleteError } = await supabase.from('todos').delete().eq('user_id', userId).eq('is_completed', true).eq('is_daily', false); 
+    if (deleteError) return alert("Laporan tersimpan, tapi data lama gagal dihapus.");
+    
     alert("Laporan berhasil dibuat dan database telah dibersihkan!");
     await fetchTodos(userId); 
   };
 
   useEffect(() => {
     setMounted(true);
+    const savedCats = localStorage.getItem('raven_categories');
+    if (savedCats) setCustomCategories(JSON.parse(savedCats));
+
     const initApp = async () => {
       setLoading(true)
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return; }
+      const { data: { user }, error } = await supabase.auth.getUser()
+      if (error || !user) {
+        await supabase.auth.signOut();
+        localStorage.removeItem('raven_todos');
+        router.push('/login');
+        return;
+      }
       setUserId(user.id)
-      setUserName("Danta")
       await fetchTodos(user.id)
       setLoading(false)
     }
     initApp()
 
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault(); setDeferredPrompt(e); setShowInstallBtn(true);
-    }
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    return () => {
-      clearInterval(timer)
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    }
+    return () => clearInterval(timer);
   }, [router, fetchTodos])
 
   useEffect(() => {
     let interval: any;
     if (isPomodoroRunning && pomodoroTime > 0) {
-      interval = setInterval(() => {
-        setPomodoroTime((prev) => prev - 1);
-      }, 1000);
+      interval = setInterval(() => setPomodoroTime((prev) => prev - 1), 1000);
     } else if (pomodoroTime === 0) {
       setIsPomodoroRunning(false);
-      
       if (pomodoroMode === 'Work') {
         playPomoSound('start-sound.wav');
         setPomodoroMode('Break');
@@ -172,15 +157,12 @@ export const useTodoLogic = () => {
   };
 
   useEffect(() => {
-    if (todos.length === 0) {
-      setActiveQuote(TECH_QUOTES[Math.floor(Math.random() * TECH_QUOTES.length)])
-    }
+    if (todos.length === 0) setActiveQuote(TECH_QUOTES[Math.floor(Math.random() * TECH_QUOTES.length)])
   }, [todos.length])
 
-  // HELPER UNTUK MENCEGAH CRASH PADA FORMAT JAM
   const processDeadline = (dl: string | null) => {
     if (!dl) return null;
-    if (dl.length === 5) { // Jika hanya jam (HH:mm)
+    if (dl.length === 5) {
       const d = new Date();
       const [h, m] = dl.split(':').map(Number);
       d.setHours(h, m, 0, 0);
@@ -190,18 +172,14 @@ export const useTodoLogic = () => {
   }
 
   const handleAdd = async (task: string, category: string, priority: string, is_daily: boolean, deadline: string | null, repeat_days: string[], description: string, start_time: string | null) => {
-    const { data: { user } } = await supabase.auth.getUser()
     const finalDeadline = processDeadline(deadline);
-    
-    // Konversi string kosong menjadi null agar Supabase tidak menolak data
     const finalStartTime = start_time === "" ? null : start_time; 
     
     const { data, error } = await supabase.from('todos').insert([{ 
-      task, category, priority, user_id: user?.id, is_daily, deadline: finalDeadline, start_time: finalStartTime, repeat_days, description 
+      task, category, priority, user_id: userId, is_daily, deadline: finalDeadline, start_time: finalStartTime, repeat_days, description 
     }]).select()
     
     if (!error && data) sync([data[0], ...todos])
-    else console.error("Error Add:", error)
   }
 
   const handleToggle = useCallback(async (id: string, is_comp: boolean) => {
@@ -227,25 +205,37 @@ export const useTodoLogic = () => {
 
   const handleUpdate = async (id: string, task: string, category: string, priority: string, is_daily: boolean, deadline: string | null, repeat_days: string[], description: string, start_time: string | null) => {
     const finalDeadline = processDeadline(deadline);
-    
-    // Konversi string kosong menjadi null
     const finalStartTime = start_time === "" ? null : start_time; 
 
-    const { error } = await supabase
-      .from('todos')
-      .update({
-        task, category, priority, is_daily,
-        deadline: finalDeadline,
-        start_time: finalStartTime, repeat_days, description
-      })
-      .eq('id', id);
+    const { error } = await supabase.from('todos').update({
+      task, category, priority, is_daily, deadline: finalDeadline, start_time: finalStartTime, repeat_days, description
+    }).eq('id', id);
 
     if (!error) {
       const updated = todos.map(t => t.id === id ? { ...t, task, category, priority, is_daily, deadline: finalDeadline, start_time: finalStartTime, repeat_days, description } : t);
       sync(updated);
-    } else {
-      console.error("Error Update:", error);
     }
+  };
+
+  const handleAddCategory = (newCat: string) => {
+    const trimmed = newCat.trim();
+    if (!trimmed || allCategories.includes(trimmed)) return;
+    const updated = [...customCategories, trimmed];
+    setCustomCategories(updated);
+    localStorage.setItem('raven_categories', JSON.stringify(updated));
+  };
+
+  const handleDeleteCategory = async (catToDelete: string) => {
+    if (FIXED_CATEGORIES.includes(catToDelete)) return;
+    const updatedTodos = todos.map(t => t.category === catToDelete ? { ...t, category: 'Other' } : t);
+    setTodos(updatedTodos);
+    localStorage.setItem('raven_todos', JSON.stringify(updatedTodos));
+    
+    const newCustom = customCategories.filter(c => c !== catToDelete);
+    setCustomCategories(newCustom);
+    localStorage.setItem('raven_categories', JSON.stringify(newCustom));
+    
+    if (userId) await supabase.from('todos').update({ category: 'Other' }).eq('category', catToDelete).eq('user_id', userId);
   };
 
   const handleLogout = async () => {
@@ -261,7 +251,7 @@ export const useTodoLogic = () => {
 
   const filteredTodos = useMemo(() => {
     const checkActive = (t: any) => {
-      if (!t.start_time || !t.deadline || t.is_completed) return false;
+      if (!t.start_time || t.is_completed) return false;
       const now = new Date();
       const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
       
@@ -272,8 +262,9 @@ export const useTodoLogic = () => {
       } else {
         [sh, sm] = t.start_time.split(':').map(Number);
       }
-      
       const startTotalMinutes = sh * 60 + sm;
+      
+      if (!t.deadline) return currentTotalMinutes >= startTotalMinutes;
       const d = new Date(t.deadline);
       const endTotalMinutes = d.getHours() * 60 + d.getMinutes();
       return currentTotalMinutes >= startTotalMinutes && currentTotalMinutes <= endTotalMinutes;
@@ -316,7 +307,7 @@ export const useTodoLogic = () => {
     const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
 
     const checkActive = (t: any) => {
-      if (!t.start_time || !t.deadline || t.is_completed) return false;
+      if (!t.start_time || t.is_completed) return false;
       let sh, sm;
       if (t.start_time.includes('T')) {
         const temp = new Date(t.start_time);
@@ -325,6 +316,8 @@ export const useTodoLogic = () => {
         [sh, sm] = t.start_time.split(':').map(Number);
       }
       const startTotalMinutes = sh * 60 + sm;
+
+      if (!t.deadline) return currentTotalMinutes >= startTotalMinutes;
       const d = new Date(t.deadline);
       const endTotalMinutes = d.getHours() * 60 + d.getMinutes();
       return currentTotalMinutes >= startTotalMinutes && currentTotalMinutes <= endTotalMinutes;
@@ -333,7 +326,6 @@ export const useTodoLogic = () => {
     return {
       pending: todos.filter(t => !t.is_completed).length,
       urgent: todos.filter(t => t.priority === 'High' && !t.is_completed).length,
-      ITERA: todos.filter(t => t.category === 'ITERA' && !t.is_completed).length,
       done: todos.filter(t => t.is_completed).length,
       overdue: todos.filter(t => t.deadline && !t.is_completed && new Date(t.deadline).getTime() < now.getTime()).length,
       onProgress: todos.filter(t => checkActive(t)).length 
@@ -341,8 +333,8 @@ export const useTodoLogic = () => {
   }, [todos]);
 
   return {
-    filter, setFilter, loading, showInstallBtn, currentTime, isModalOpen, mounted,
-    activeQuote, userName, filteredTodos, stats, isSidebarOpen, getCategoryProgress,
+    filter, setFilter, loading, showInstallBtn, currentTime, isModalOpen, mounted, allCategories,
+    activeQuote, userName, filteredTodos, stats, isSidebarOpen, getCategoryProgress, handleAddCategory, handleDeleteCategory,
     setIsSidebarOpen, setIsModalOpen, handleInstallClick: async () => {}, 
     handleAdd, handleRename, handleToggle, handleDelete, handleLogout, pomodoroTime, isPomodoroRunning, pomodoroMode, 
     togglePomodoro, setPomodoroTime, setPomodoroMode, formatPomoTime, archiveWeeklyTask, handleUpdate

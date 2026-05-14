@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 
-export const TodoForm = ({ isOpen, onClose, onAdd, initialData = null }: any) => {
+export const TodoForm = ({ isOpen, onClose, onAdd, initialData = null, categories = [] }: any) => {
   const [newTask, setNewTask] = useState('')
   const [category, setCategory] = useState('Pribadi')
   const [isDaily, setIsDaily] = useState(false)
@@ -22,7 +22,6 @@ export const TodoForm = ({ isOpen, onClose, onAdd, initialData = null }: any) =>
       setNewTask(initialData.task || '');
       setCategory(initialData.category || 'Pribadi');
       setIsDaily(initialData.is_daily || false);
-      
       if (initialData.deadline) {
         if (initialData.is_daily) {
           const d = new Date(initialData.deadline);
@@ -34,11 +33,9 @@ export const TodoForm = ({ isOpen, onClose, onAdd, initialData = null }: any) =>
       } else {
         setDeadline('');
       }
-
       setSelectedDays(initialData.repeat_days || []);
       setDescription(initialData.description || '');
       setPriority(initialData.priority || 'Medium');
-      
       if (initialData.start_time) {
         if (initialData.start_time.includes('T')) {
           const d = new Date(initialData.start_time);
@@ -98,7 +95,7 @@ export const TodoForm = ({ isOpen, onClose, onAdd, initialData = null }: any) =>
             <div className="space-y-2">
               <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Projectspace</label>
               <div className="flex gap-2 flex-wrap">
-                {['Pribadi', 'ITERA', 'Project'].map(cat => (
+                {categories.map((cat: string) => (
                   <button key={cat} type="button" onClick={() => setCategory(cat)} className={`px-3 py-1.5 rounded-md text-xs transition-all ${category === cat ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                     {cat}
                   </button>
@@ -137,7 +134,6 @@ export const TodoForm = ({ isOpen, onClose, onAdd, initialData = null }: any) =>
             <div className="grid grid-cols-2 gap-4 pt-2">
               <div className="space-y-1">
                 <label className="text-xs text-stone-500">Start Time</label>
-                {/* Start time selalu type="time" karena hanya butuh jam dan menit */}
                 <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="w-full bg-white border border-stone-200 text-sm px-2 py-1.5 rounded-md outline-none text-stone-700" />
               </div>
               <div className="space-y-1">
