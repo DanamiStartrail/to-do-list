@@ -1,20 +1,35 @@
-Open [this](https://to-do-list-three-alpha-99.vercel.app/) with your browser to see the result.
-Use this account to review tes.akun.demo777@gmail.com pass: TesDemo
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# 🐦 Raven v3 - Task Management
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+A minimalist, highly functional task management web application designed for deep focus and productivity. Built with Next.js and Supabase.
 
-## Learn More
+## 🚀 Live Demo
 
-To learn more about Next.js, take a look at the following resources:
+Experience the application live:
+**[Open Raven v3 in Browser](https://to-do-list-three-alpha-99.vercel.app/)**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Demo Account for Reviewers:**
+- **Email:** `tes.akun.demo777@gmail.com`
+- **Password:** `TesDemo`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## ✨ Key Features
 
-## Deploy on Vercel
+- **Functional Minimalist UI:** A distraction-free, "zen-mode" interface built with Tailwind CSS.
+- **Smart Task Tracking:** Supports one-time tasks and daily routines with smart overdue detection.
+- **Built-in Pomodoro Timer:** Seamlessly switch between Focus and Break modes directly from the sidebar.
+- **Projectspaces:** Organize tasks into customizable categories (e.g., Pribadi, Kuliah, Study).
+- **Weekly Archive & Analytics:** One-click maintenance to archive completed tasks into weekly reports.
+- **Real-time Synchronization:** Powered by Supabase for instant data updates across devices.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 💻 Tech Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Frontend:** Next.js (App Router), React, Tailwind CSS
+- **Backend & Database:** Supabase (PostgreSQL), Supabase Auth
+- **Deployment:** Vercel
+
+## 🛠️ Local Development
+
+To run this project locally on your machine:
+
+1. Clone the repository:
+```bash
+git clone [https://github.com/your-username/your-repo-name.git](https://github.com/your-username/your-repo-name.git)
