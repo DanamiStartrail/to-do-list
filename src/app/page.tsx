@@ -14,6 +14,19 @@ export default function Home() {
   } = useTodoLogic();
 
   const [editingTodo, setEditingTodo] = useState<any>(null);
+  
+  // State untuk modal tambah kategori
+  const [isCatModalOpen, setIsCatModalOpen] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+
+  const handleAddCatSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newCatName.trim()) {
+      handleAddCategory(newCatName);
+      setNewCatName("");
+      setIsCatModalOpen(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-stone-50 flex relative font-sans text-stone-800">
@@ -65,22 +78,20 @@ export default function Home() {
             <div className="space-y-1">
               <div className="flex items-center justify-between mb-2 pr-1">
                 <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Projects</p>
-                <button onClick={() => {
-                  const newCat = prompt("Nama project/kategori baru:");
-                  if (newCat) handleAddCategory(newCat);
-                }} className="text-stone-400 hover:text-stone-800 transition-colors">
+                {/* Tombol buka form kategori */}
+                <button onClick={() => setIsCatModalOpen(true)} className="text-stone-400 hover:text-stone-800 transition-colors">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 </button>
               </div>
               
-              {allCategories.map((cat) => {
+              {allCategories.map((cat: string) => {
                 const prog = getCategoryProgress(cat);
                 const isActive = filter === cat;
                 const isCustom = !['Pribadi', 'Kuliah', 'Study', 'Other'].includes(cat);
                 return (
                   <div key={cat} className={`group flex items-center justify-between px-3 py-1.5 rounded text-sm transition-colors ${isActive ? 'bg-white shadow-sm border border-stone-200 text-stone-900 font-medium' : 'text-stone-600 hover:bg-stone-200/50'}`}>
                     <button onClick={() => setFilter(cat)} className="flex items-center gap-2 flex-1 text-left">
-                      <span className="text-stone-400 font-mono text-xs">#</span> {cat}
+                      <span className="text-stone-400 font-mono text-xs">#</span> <span className="truncate max-w-[120px]">{cat}</span>
                     </button>
                     <div className="flex items-center gap-2">
                       {prog > 0 && <span className={`text-[10px] ${isActive ? 'text-stone-500' : 'text-stone-400'}`}>{prog}%</span>}
@@ -118,16 +129,6 @@ export default function Home() {
             </div>
 
             <div className="border-t border-stone-200 pt-6">
-              <div className="flex items-end justify-between mb-2">
-                <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Completion</p>
-                <span className="text-[10px] font-medium text-stone-500">{stats.done}/{stats.pending + stats.done}</span>
-              </div>
-              <div className="w-full h-1 bg-stone-200 rounded-full overflow-hidden">
-                <div className="h-full bg-stone-800 transition-all duration-700" style={{ width: `${(stats.done / (stats.pending + stats.done || 1)) * 100}%` }} />
-              </div>
-            </div>
-
-            <div className="border-t border-stone-200 pt-6">
                <div className="flex items-center justify-between">
                  <div>
                     <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-0.5">Maintenance</p>
@@ -151,13 +152,8 @@ export default function Home() {
       {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-stone-900/10 z-40 md:hidden" />}
 
       <section className="flex-1 h-screen overflow-y-auto relative">
-        
         {!isSidebarOpen && (
-          <button 
-            onClick={() => setIsSidebarOpen(true)} 
-            className="absolute top-6 left-6 p-1.5 rounded text-stone-500 hover:bg-stone-200 transition-colors z-30" 
-            title="Open Sidebar"
-          >
+          <button onClick={() => setIsSidebarOpen(true)} className="absolute top-6 left-6 p-1.5 rounded text-stone-500 hover:bg-stone-200 transition-colors z-30" title="Open Sidebar">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
           </button>
         )}
@@ -173,15 +169,9 @@ export default function Home() {
                 <p className="text-sm text-stone-500 italic">"{activeQuote}"</p>
               </div>
             ) : (
-              <div className="border-t border-stone-200">
+              <div className="border-stone-200">
                 {filteredTodos.map(todo => (
-                  <TodoItem 
-                    key={todo.id} 
-                    todo={todo} 
-                    onToggle={handleToggle} 
-                    onDelete={handleDelete} 
-                    onEdit={(t: any) => { setEditingTodo(t); setIsModalOpen(true); }} 
-                  />
+                  <TodoItem key={todo.id} todo={todo} onToggle={handleToggle} onDelete={handleDelete} onEdit={(t: any) => { setEditingTodo(t); setIsModalOpen(true); }} />
                 ))}
               </div>
             )}
@@ -189,6 +179,7 @@ export default function Home() {
         </div>
       </section>
 
+      {/* FORM TASK UTAMA */}
       <TodoForm 
         isOpen={isModalOpen || !!editingTodo} 
         onClose={() => { setIsModalOpen(false); setEditingTodo(null); }} 
@@ -201,6 +192,27 @@ export default function Home() {
         initialData={editingTodo}
         categories={allCategories}
       />
+
+      {/* FORM MODAL KATEGORI BARU */}
+      {isCatModalOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-stone-900/20 backdrop-blur-sm" onClick={() => setIsCatModalOpen(false)} />
+          <div className="relative w-full max-w-sm bg-white p-5 rounded-lg shadow-xl border border-stone-200 animate-fade-in-up">
+            <h3 className="text-sm font-semibold text-stone-800 mb-3">Add New Projectspace</h3>
+            <form onSubmit={handleAddCatSubmit}>
+              <input 
+                autoFocus type="text" value={newCatName} onChange={(e) => setNewCatName(e.target.value)}
+                placeholder="e.g. Work, Shopping, Goals..." 
+                className="w-full bg-stone-50 border border-stone-200 text-sm px-3 py-2 rounded outline-none focus:border-stone-400 mb-4"
+              />
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => setIsCatModalOpen(false)} className="px-3 py-1.5 text-xs text-stone-500 hover:text-stone-800 font-medium transition-colors">Cancel</button>
+                <button type="submit" className="px-3 py-1.5 bg-stone-800 text-white rounded text-xs font-medium hover:bg-stone-900 transition-colors">Add</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       
       <button onClick={() => { setEditingTodo(null); setIsModalOpen(true); }} className="fixed bottom-6 right-6 w-12 h-12 bg-stone-800 text-white rounded-full shadow-lg flex items-center justify-center z-30 md:hidden">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>

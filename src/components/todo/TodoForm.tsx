@@ -69,96 +69,103 @@ export const TodoForm = ({ isOpen, onClose, onAdd, initialData = null, categorie
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-stone-900/20 backdrop-blur-sm" onClick={onClose} />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0 sm:items-start sm:pt-[15vh]">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-stone-900/10 backdrop-blur-[2px]" onClick={onClose} />
 
-      <div className="relative w-full max-w-lg bg-white p-6 md:p-8 rounded-lg shadow-xl border border-stone-200">
+      {/* Form Container (Ala Todoist) */}
+      <div className="relative w-full max-w-2xl bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-stone-200 flex flex-col overflow-hidden animate-fade-in-up">
         
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-medium text-stone-900">
-            {initialData ? 'Edit Task' : 'New Task'}
-          </h2>
-          <button onClick={onClose} className="text-stone-400 hover:text-stone-800 transition-all">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </button>
-        </div>
-
-        <div className="space-y-6">
+        {/* Area Input Teks (Tanpa Border) */}
+        <div className="p-4 sm:p-5">
           <input 
             autoFocus value={newTask} onChange={(e) => setNewTask(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            className="w-full bg-transparent border-b-2 border-stone-200 py-2 text-stone-800 placeholder:text-stone-400 outline-none text-xl focus:border-stone-800 transition-colors"
-            placeholder="What needs to be done?"
+            className="w-full text-lg font-semibold text-stone-900 placeholder:text-stone-400 outline-none border-none bg-transparent mb-2 p-0"
+            placeholder="Task name"
+          />
+          
+          <textarea 
+            value={description} onChange={(e) => setDescription(e.target.value)}
+            className="w-full text-sm text-stone-600 placeholder:text-stone-400 outline-none border-none bg-transparent resize-none p-0"
+            placeholder="Description"
+            rows={2}
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Projectspace</label>
-              <div className="flex gap-2 flex-wrap">
-                {categories.map((cat: string) => (
-                  <button key={cat} type="button" onClick={() => setCategory(cat)} className={`px-3 py-1.5 rounded-md text-xs transition-all ${category === cat ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </div>
+          {/* Area Options (Kategori, Priority) */}
+          <div className="flex flex-wrap items-center gap-3 mt-4">
+            
+            {/* Dropdown Category Minimalis */}
+            <select 
+              value={category} 
+              onChange={(e) => setCategory(e.target.value)} 
+              className="text-xs font-medium text-stone-600 bg-white border border-stone-200 rounded py-1 px-2 outline-none cursor-pointer hover:bg-stone-50"
+            >
+              {categories.map((cat: string) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
 
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Priority</label>
-              <div className="flex gap-2">
-                {['Low', 'Medium', 'High'].map((p) => (
-                  <button key={p} type="button" onClick={() => setPriority(p)} className={`flex-1 py-1.5 rounded-md text-xs border transition-all ${priority === p ? 'bg-stone-100 border-stone-800 text-stone-900 font-medium' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'}`}>
-                    {p}
-                  </button>
-                ))}
-              </div>
+            {/* Pill Priority */}
+            <div className="flex bg-stone-100 p-0.5 rounded">
+              {['Low', 'Medium', 'High'].map((p) => (
+                <button 
+                  key={p} type="button" onClick={() => setPriority(p)} 
+                  className={`px-3 py-1 rounded-sm text-[10px] font-semibold uppercase transition-all ${priority === p ? 'bg-white shadow-sm text-stone-800' : 'text-stone-500 hover:text-stone-700'}`}
+                >
+                  {p}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="border border-stone-200 p-4 rounded-md space-y-4">
-            <div className="flex items-center gap-3">
-              <input type="checkbox" id="dailyCheck" checked={isDaily} onChange={e => setIsDaily(e.target.checked)} className="w-4 h-4 rounded-[3px] border-stone-300 text-stone-800 focus:ring-stone-800" />
-              <label htmlFor="dailyCheck" className="text-sm text-stone-700 cursor-pointer">Set as Daily Routine</label>
-            </div>
+          {/* Area Time & Routine (Ringkas) */}
+          <div className="mt-4 bg-stone-50/50 border border-stone-200 rounded-lg p-3">
+            <label className="flex items-center gap-2 mb-3 cursor-pointer">
+              <input type="checkbox" checked={isDaily} onChange={e => setIsDaily(e.target.checked)} className="w-3.5 h-3.5 rounded-sm border-stone-300 text-stone-800 focus:ring-stone-800" />
+              <span className="text-xs font-medium text-stone-700">Daily Routine</span>
+            </label>
 
-            <div className={`space-y-3 transition-all ${isDaily ? 'block' : 'hidden'}`}>
-              <div className="flex justify-between gap-1">
+            {isDaily && (
+              <div className="flex justify-between gap-1 mb-3">
                 {days.map((day, idx) => (
-                  <button key={day} type="button" onClick={() => toggleDay(fullDays[idx])} className={`flex-1 py-1.5 rounded text-xs transition-all border ${selectedDays.includes(fullDays[idx]) ? 'bg-stone-200 text-stone-800 border-stone-300' : 'bg-white text-stone-400 border-stone-200'}`}>
+                  <button key={day} type="button" onClick={() => toggleDay(fullDays[idx])} className={`flex-1 py-1 rounded text-[10px] font-medium transition-all border ${selectedDays.includes(fullDays[idx]) ? 'bg-stone-200 text-stone-800 border-stone-300' : 'bg-white text-stone-400 border-stone-200'}`}>
                     {day}
                   </button>
                 ))}
               </div>
-            </div>
+            )}
 
-            <div className="grid grid-cols-2 gap-4 pt-2">
-              <div className="space-y-1">
-                <label className="text-xs text-stone-500">Start Time</label>
-                <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="w-full bg-white border border-stone-200 text-sm px-2 py-1.5 rounded-md outline-none text-stone-700" />
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <label className="text-[10px] text-stone-500 block mb-1">Start Time</label>
+                <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="w-full bg-white border border-stone-200 text-xs px-2 py-1.5 rounded outline-none text-stone-700" />
               </div>
-              <div className="space-y-1">
-                <label className="text-xs text-stone-500">Deadline</label>
-                <input type={isDaily ? "time" : "datetime-local"} value={deadline} onChange={(e) => setDeadline(e.target.value)} className="w-full bg-white border border-stone-200 text-sm px-2 py-1.5 rounded-md outline-none text-stone-700" />
+              <div className="flex-1">
+                <label className="text-[10px] text-stone-500 block mb-1">Deadline</label>
+                <input type={isDaily ? "time" : "datetime-local"} value={deadline} onChange={(e) => setDeadline(e.target.value)} className="w-full bg-white border border-stone-200 text-xs px-2 py-1.5 rounded outline-none text-stone-700" />
               </div>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Note</label>
-            <textarea 
-              value={description} onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-stone-50 border border-stone-200 px-3 py-2 text-stone-800 placeholder:text-stone-400 outline-none text-sm rounded-md h-20 resize-none focus:border-stone-400 transition-colors"
-              placeholder="Add extra details..."
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-stone-100">
-             <button onClick={onClose} className="px-4 py-2 text-sm text-stone-500 hover:text-stone-800 font-medium transition-colors">Cancel</button>
-             <button onClick={handleSubmit} className="px-6 py-2 bg-stone-800 text-white rounded-md text-sm font-medium hover:bg-stone-900 transition-colors">
-               {initialData ? 'Save' : 'Create'}
-             </button>
-          </div>
         </div>
+
+        {/* Footer Area (Cancel / Submit) */}
+        <div className="flex justify-between items-center bg-stone-50 border-t border-stone-100 p-3 px-4 sm:px-5">
+           
+           <div className="flex items-center gap-2">
+             <span className="text-xs text-stone-400">Projectspace:</span>
+             <span className="text-xs font-medium text-stone-600">{category}</span>
+           </div>
+
+           <div className="flex gap-2">
+             <button onClick={onClose} className="px-3 py-1.5 text-xs text-stone-600 hover:bg-stone-200/50 rounded transition-colors font-medium">Cancel</button>
+             <button onClick={handleSubmit} disabled={!newTask.trim()} className="px-4 py-1.5 bg-[#DC4C3E] hover:bg-[#C53727] text-white rounded text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+               {initialData ? 'Save' : 'Add task'}
+             </button>
+           </div>
+        </div>
+
       </div>
     </div>
   )
