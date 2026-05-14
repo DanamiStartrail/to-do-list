@@ -11,16 +11,45 @@ export const TodoForm = ({ isOpen, onClose, onAdd, initialData = null }: any) =>
   const [priority, setPriority] = useState('Medium');
   const [startTime, setStartTime] = useState("");
 
+  const getLocalDatetime = (isoString: string) => {
+    const d = new Date(isoString);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
   useEffect(() => {
     if (initialData && isOpen) {
       setNewTask(initialData.task || '');
       setCategory(initialData.category || 'Pribadi');
       setIsDaily(initialData.is_daily || false);
-      setDeadline(initialData.deadline ? new Date(initialData.deadline).toISOString().slice(0, 16) : '');
+      
+      if (initialData.deadline) {
+        if (initialData.is_daily) {
+          const d = new Date(initialData.deadline);
+          const pad = (n: number) => n.toString().padStart(2, '0');
+          setDeadline(`${pad(d.getHours())}:${pad(d.getMinutes())}`);
+        } else {
+          setDeadline(getLocalDatetime(initialData.deadline));
+        }
+      } else {
+        setDeadline('');
+      }
+
       setSelectedDays(initialData.repeat_days || []);
       setDescription(initialData.description || '');
       setPriority(initialData.priority || 'Medium');
-      setStartTime(initialData.start_time || "");
+      
+      if (initialData.start_time) {
+        if (initialData.start_time.includes('T')) {
+          const d = new Date(initialData.start_time);
+          const pad = (n: number) => n.toString().padStart(2, '0');
+          setStartTime(`${pad(d.getHours())}:${pad(d.getMinutes())}`);
+        } else {
+          setStartTime(initialData.start_time);
+        }
+      } else {
+        setStartTime('');
+      }
     } else if (!initialData && isOpen) {
       setNewTask(''); setCategory('Pribadi'); setIsDaily(false); setDeadline('');
       setSelectedDays([]); setDescription(''); setPriority('Medium'); setStartTime('');
@@ -44,12 +73,10 @@ export const TodoForm = ({ isOpen, onClose, onAdd, initialData = null }: any) =>
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop minimalis */}
       <div className="absolute inset-0 bg-stone-900/20 backdrop-blur-sm" onClick={onClose} />
 
       <div className="relative w-full max-w-lg bg-white p-6 md:p-8 rounded-lg shadow-xl border border-stone-200">
         
-        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-lg font-medium text-stone-900">
             {initialData ? 'Edit Task' : 'New Task'}
@@ -60,7 +87,6 @@ export const TodoForm = ({ isOpen, onClose, onAdd, initialData = null }: any) =>
         </div>
 
         <div className="space-y-6">
-          {/* Main Input */}
           <input 
             autoFocus value={newTask} onChange={(e) => setNewTask(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
@@ -69,8 +95,6 @@ export const TodoForm = ({ isOpen, onClose, onAdd, initialData = null }: any) =>
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            
-            {/* Kategori Flat */}
             <div className="space-y-2">
               <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Projectspace</label>
               <div className="flex gap-2 flex-wrap">
@@ -82,7 +106,6 @@ export const TodoForm = ({ isOpen, onClose, onAdd, initialData = null }: any) =>
               </div>
             </div>
 
-            {/* Priority Flat */}
             <div className="space-y-2">
               <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Priority</label>
               <div className="flex gap-2">
@@ -95,9 +118,7 @@ export const TodoForm = ({ isOpen, onClose, onAdd, initialData = null }: any) =>
             </div>
           </div>
 
-          {/* Time & Daily Settings - Bordered Section */}
           <div className="border border-stone-200 p-4 rounded-md space-y-4">
-            
             <div className="flex items-center gap-3">
               <input type="checkbox" id="dailyCheck" checked={isDaily} onChange={e => setIsDaily(e.target.checked)} className="w-4 h-4 rounded-[3px] border-stone-300 text-stone-800 focus:ring-stone-800" />
               <label htmlFor="dailyCheck" className="text-sm text-stone-700 cursor-pointer">Set as Daily Routine</label>
@@ -116,7 +137,8 @@ export const TodoForm = ({ isOpen, onClose, onAdd, initialData = null }: any) =>
             <div className="grid grid-cols-2 gap-4 pt-2">
               <div className="space-y-1">
                 <label className="text-xs text-stone-500">Start Time</label>
-                <input type={isDaily ? "time" : "datetime-local"} value={startTime} onChange={(e) => setStartTime(e.target.value)} className="w-full bg-white border border-stone-200 text-sm px-2 py-1.5 rounded-md outline-none text-stone-700" />
+                {/* Start time selalu type="time" karena hanya butuh jam dan menit */}
+                <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="w-full bg-white border border-stone-200 text-sm px-2 py-1.5 rounded-md outline-none text-stone-700" />
               </div>
               <div className="space-y-1">
                 <label className="text-xs text-stone-500">Deadline</label>

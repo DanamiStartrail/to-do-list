@@ -21,6 +21,10 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
 
   const formatStart = (timeStr: string) => {
     if (!timeStr) return '';
+    if (timeStr.includes('T')) {
+       const d = new Date(timeStr);
+       return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+    }
     const [hours, minutes] = timeStr.split(':');
     return `${hours}:${minutes}`;
   };
@@ -34,11 +38,19 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
     return `${isToday ? 'Today' : d.getDate() + ' ' + d.toLocaleString('en-GB', { month: 'short' })}, ${time}`;
   };
 
+  const extractTime = (timeStr: string) => {
+    if (timeStr.includes('T')) {
+       const d = new Date(timeStr);
+       return [d.getHours(), d.getMinutes()];
+    }
+    return timeStr.split(':').map(Number);
+  };
+
   const isNow = (start: string | null, end: string | null) => {
     if (!start || !end || todo.is_completed) return false;
     const now = new Date();
     const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
-    const [sHours, sMinutes] = start.split(':').map(Number);
+    const [sHours, sMinutes] = extractTime(start);
     const startTotalMinutes = sHours * 60 + sMinutes;
     const endDate = new Date(end);
     const endTotalMinutes = endDate.getHours() * 60 + endDate.getMinutes();
@@ -58,7 +70,6 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
   const active = isNow(todo.start_time, todo.deadline);
   const isOverdue = checkOverdue();
 
-  // Indikator Prioritas berupa titik warna
   const priorityColor = {
     High: 'bg-rose-500',
     Medium: 'bg-amber-500',
@@ -68,7 +79,6 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
   return (
     <div className="group flex items-start gap-4 py-4 border-b border-stone-200 hover:bg-stone-100/50 transition-colors px-2">
       
-      {/* 1. Checkbox Minimalis */}
       <button 
         onClick={() => onToggle(todo.id, todo.is_completed)}
         className={`w-4 h-4 mt-1 rounded-[3px] border flex items-center justify-center flex-shrink-0 transition-colors ${
@@ -78,13 +88,10 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
         {todo.is_completed && <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" className="w-3 h-3"><polyline points="20 6 9 17 4 12"></polyline></svg>}
       </button>
 
-      {/* 2. Content */}
       <div className="flex-1 min-w-0">
         
-        {/* Baris Judul & Tombol Aksi */}
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => onEdit(todo)}>
-            {/* Titik Prioritas */}
             <div className={`w-1.5 h-1.5 rounded-full ${priorityColor}`} title={`Priority: ${todo.priority}`} />
             
             <h3 className={`text-[15px] leading-tight ${todo.is_completed ? 'text-stone-400 line-through' : 'text-stone-800'}`}>
@@ -105,12 +112,10 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
           </div>
         </div>
         
-        {/* Baris Metadata (Waktu, Kategori) */}
         <div className="flex items-center gap-4 mt-1.5 text-xs text-stone-500">
           
           {todo.category && <span>{todo.category}</span>}
           
-          {/* Indikator Waktu Teks Biasa */}
           {(todo.start_time || todo.deadline) && (
             <div className={`flex items-center gap-1 ${isOverdue ? 'text-rose-500 font-medium' : ''}`}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -137,7 +142,6 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }: any) => {
           <span className="ml-auto text-[10px] text-stone-400">{formatTimeAgo(todo.inserted_at)}</span>
         </div>
 
-        {/* Isi Note */}
         {showDesc && todo.description && (
           <div className="mt-3 pl-3 border-l-2 border-stone-200 py-0.5">
             <p className="text-sm text-stone-600 whitespace-pre-line">{todo.description}</p>

@@ -24,7 +24,7 @@ export const useTodoLogic = () => {
   const [userName, setUserName] = useState("User")
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [mounted, setMounted] = useState(false) // Fix Hydration
+  const [mounted, setMounted] = useState(false) 
   const router = useRouter();
   const todayName = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(new Date());
   const [pomodoroTime, setPomodoroTime] = useState(25 * 60);
@@ -32,20 +32,17 @@ export const useTodoLogic = () => {
   const [pomodoroMode, setPomodoroMode] = useState<'Work' | 'Break'>('Work');
   const [userId, setUserId] = useState<string | null>(null);
   
-  // Helper Sync
   const sync = useCallback((updated: any[]) => { 
     setTodos(updated); 
     localStorage.setItem('raven_todos', JSON.stringify(updated));
   }, []);
 
-  // Helper untuk putar suara
   const playPomoSound = (file: string) => {
     const audio = new Audio(`/${file}`);
     audio.volume = 0.5;
     audio.play().catch(e => console.log("Audio play blocked"));
   };
 
-  // --- FUNGSI RESET DAILY (SINKRON DENGAN DATABASE) ---
   const checkAndResetDaily = useCallback(async (currentTodos: any[]) => {
     const today = new Date().toLocaleDateString('id-ID');
     const lastReset = localStorage.getItem('raven_last_reset');
@@ -95,18 +92,15 @@ export const useTodoLogic = () => {
     const report = {
       user_id: userId,
       total_done: completedTasks.length,
-      Kuliah_count: completedTasks.filter(t => t.category === 'ITERA').length, // Diupdate ke ITERA
+      Kuliah_count: completedTasks.filter(t => t.category === 'ITERA').length, 
       Pribadi_count: completedTasks.filter(t => t.category === 'Pribadi').length,
-      Work_count: completedTasks.filter(t => t.category === 'Project').length, // Diupdate ke Project
+      Work_count: completedTasks.filter(t => t.category === 'Project').length, 
       week_range: `Minggu ke-${Math.ceil(new Date().getDate() / 7)} ${new Date().toLocaleString('id-ID', { month: 'long' })}`
     };
 
-    const { error: insertError } = await supabase
-      .from('weekly_reports')
-      .insert([report]);
+    const { error: insertError } = await supabase.from('weekly_reports').insert([report]);
 
     if (insertError) {
-      console.error("Gagal simpan laporan:", insertError.message);
       return alert("Gagal membuat laporan mingguan.");
     }
 
@@ -115,17 +109,15 @@ export const useTodoLogic = () => {
       .delete()
       .eq('user_id', userId)       
       .eq('is_completed', true)
-      .eq('is_daily', false); // Proteksi agar Daily Task tidak terhapus saat arsip
+      .eq('is_daily', false); 
 
     if (deleteError) {
-      console.error("Gagal hapus data:", deleteError.message);
       return alert("Laporan tersimpan, tapi data lama gagal dihapus.");
     }
     alert("Laporan berhasil dibuat dan database telah dibersihkan!");
     await fetchTodos(userId); 
   };
 
-  // App Initialization & Time Logic
   useEffect(() => {
     setMounted(true);
     const initApp = async () => {
@@ -185,15 +177,28 @@ export const useTodoLogic = () => {
     }
   }, [todos.length])
 
-  // Actions
+  // HELPER UNTUK MENCEGAH CRASH PADA FORMAT JAM
+  const processDeadline = (dl: string | null) => {
+    if (!dl) return null;
+    if (dl.length === 5) { // Jika hanya jam (HH:mm)
+      const d = new Date();
+      const [h, m] = dl.split(':').map(Number);
+      d.setHours(h, m, 0, 0);
+      return d.toISOString();
+    }
+    return new Date(dl).toISOString();
+  }
+
   const handleAdd = async (task: string, category: string, priority: string, is_daily: boolean, deadline: string | null, repeat_days: string[], description: string, start_time: string | null) => {
     const { data: { user } } = await supabase.auth.getUser()
-    const finalDeadline = deadline ? new Date(deadline).toISOString() : null;
+    const finalDeadline = processDeadline(deadline);
     
     const { data, error } = await supabase.from('todos').insert([{ 
       task, category, priority, user_id: user?.id, is_daily, deadline: finalDeadline, start_time, repeat_days, description 
     }]).select()
+    
     if (!error && data) sync([data[0], ...todos])
+    else console.error("Error Add:", error)
   }
 
   const handleToggle = useCallback(async (id: string, is_comp: boolean) => {
@@ -217,9 +222,8 @@ export const useTodoLogic = () => {
       sync(todos.filter(t => t.id !== id));
   }
 
-  // --- FIX: HANDLEUPDATE DISINKRONKAN DENGAN PAGE.TSX ---
   const handleUpdate = async (id: string, task: string, category: string, priority: string, is_daily: boolean, deadline: string | null, repeat_days: string[], description: string, start_time: string | null) => {
-    const finalDeadline = deadline ? new Date(deadline).toISOString() : null;
+    const finalDeadline = processDeadline(deadline);
     const { error } = await supabase
       .from('todos')
       .update({
@@ -232,6 +236,8 @@ export const useTodoLogic = () => {
     if (!error) {
       const updated = todos.map(t => t.id === id ? { ...t, task, category, priority, is_daily, deadline: finalDeadline, start_time, repeat_days, description } : t);
       sync(updated);
+    } else {
+      console.error("Error Update:", error);
     }
   };
 
@@ -251,7 +257,15 @@ export const useTodoLogic = () => {
       if (!t.start_time || !t.deadline || t.is_completed) return false;
       const now = new Date();
       const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
-      const [sh, sm] = t.start_time.split(':').map(Number);
+      
+      let sh, sm;
+      if (t.start_time.includes('T')) {
+        const temp = new Date(t.start_time);
+        sh = temp.getHours(); sm = temp.getMinutes();
+      } else {
+        [sh, sm] = t.start_time.split(':').map(Number);
+      }
+      
       const startTotalMinutes = sh * 60 + sm;
       const d = new Date(t.deadline);
       const endTotalMinutes = d.getHours() * 60 + d.getMinutes();
@@ -281,9 +295,10 @@ export const useTodoLogic = () => {
           if (!aOverdue && bOverdue) return 1;
           if (aActive && !bActive) return -1;
           if (!aActive && bActive) return 1;
-          if (priorityWeight[b.priority] !== priorityWeight[a.priority]) {
-            return priorityWeight[b.priority] - priorityWeight[a.priority];
-          }
+          
+          const pA = priorityWeight[a.priority] || 0;
+          const pB = priorityWeight[b.priority] || 0;
+          if (pB !== pA) return pB - pA;
         }
         return new Date(b.inserted_at).getTime() - new Date(a.inserted_at).getTime();
       });
@@ -295,7 +310,13 @@ export const useTodoLogic = () => {
 
     const checkActive = (t: any) => {
       if (!t.start_time || !t.deadline || t.is_completed) return false;
-      const [sh, sm] = t.start_time.split(':').map(Number);
+      let sh, sm;
+      if (t.start_time.includes('T')) {
+        const temp = new Date(t.start_time);
+        sh = temp.getHours(); sm = temp.getMinutes();
+      } else {
+        [sh, sm] = t.start_time.split(':').map(Number);
+      }
       const startTotalMinutes = sh * 60 + sm;
       const d = new Date(t.deadline);
       const endTotalMinutes = d.getHours() * 60 + d.getMinutes();
