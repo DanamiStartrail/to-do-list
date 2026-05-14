@@ -1,30 +1,16 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTodoLogic } from '@/hooks/useTodoLogic'
 import { TodoForm } from '@/components/todo/TodoForm'
 import { TodoItem } from '@/components/todo/TodoItem'
 
 export default function Home() {
   const {
-    filter, setFilter, loading, currentTime, activeQuote, userName, filteredTodos, stats, 
+    filter, setFilter, loading, activeQuote, userName, filteredTodos, stats, 
     getCategoryProgress, handleAdd, handleToggle, handleDelete, handleLogout,
     isModalOpen, setIsModalOpen, isSidebarOpen, setIsSidebarOpen, pomodoroTime, isPomodoroRunning, pomodoroMode, 
-    togglePomodoro, setPomodoroTime, setPomodoroMode, formatPomoTime, archiveWeeklyTask, handleUpdate,
-    mounted 
+    togglePomodoro, setPomodoroTime, setPomodoroMode, formatPomoTime, archiveWeeklyTask, handleUpdate
   } = useTodoLogic();
-
-  const getGreeting = () => {
-    if (!mounted) return 'Loading';
-    const h = currentTime.getHours();
-    return h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening';
-  };
-
-  const getMsg = () => {
-    if (loading) return "Syncing protocols...";
-    if (stats.urgent > 0) return `Caution: ${stats.urgent} urgent tasks detected.`;
-    if (stats.pending === 0) return "Systems clear. Great job, Danta!";
-    return filter !== 'Semua' ? `Projectspace: ${filter}` : "Ready for today's objectives?";
-  };
 
   const [editingTodo, setEditingTodo] = useState<any>(null);
 
@@ -41,11 +27,8 @@ export default function Home() {
         `}>
         <div className={`px-5 py-8 flex flex-col h-full overflow-hidden ${isSidebarOpen ? 'opacity-100 w-64' : 'opacity-0 md:opacity-0 w-0'}`}>          
           
-          {/* Logo Minimalis & Tombol Close (Ujung Kanan Atas Sidebar) */}
-          {/* Profil User (Menggantikan Logo Raven) & Tombol Close */}
+          {/* Profil User & Tombol Close */}
           <div className="mb-8 flex items-center justify-between">
-             
-             {/* Grup Profil (Avatar + Nama + Dropdown Icon) */}
              <div className="flex items-center gap-2.5 cursor-pointer hover:bg-stone-200/50 p-1.5 -ml-1.5 rounded-md transition-colors">
                 <div className="w-7 h-7 rounded-full bg-stone-200 overflow-hidden flex-shrink-0 border border-stone-300">
                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Avatar" className="w-full h-full object-cover" />
@@ -56,14 +39,10 @@ export default function Home() {
                 </svg>
              </div>
              
-             {/* Ikon Kanan (Notifikasi & Close) */}
              <div className="flex items-center gap-1">
-               {/* Ikon Notifikasi (ala Todoist) */}
                <button className="p-1.5 text-stone-400 hover:text-stone-800 hover:bg-stone-200/50 rounded-md transition-colors hidden md:block" title="Notifications">
                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                </button>
-               
-               {/* Tombol Close Sidebar */}
                <button onClick={() => setIsSidebarOpen(false)} className="p-1.5 text-stone-400 hover:text-stone-800 hover:bg-stone-200/50 rounded-md transition-colors" title="Close Sidebar">
                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                </button>
@@ -168,7 +147,7 @@ export default function Home() {
       {/* --- CONTENT UTAMA --- */}
       <section className="flex-1 h-screen overflow-y-auto relative">
         
-        {/* Tombol Open Sidebar (Absolute Top Left) - Muncul jika ditutup */}
+        {/* Tombol Open Sidebar (Absolute Top Left) */}
         {!isSidebarOpen && (
           <button 
             onClick={() => setIsSidebarOpen(true)} 
@@ -179,41 +158,20 @@ export default function Home() {
           </button>
         )}
 
-        <div className="w-full max-w-[760px] mx-auto py-10 px-6 md:px-16 pt-20 sm:pt-10">
-          
-          {/* Header */}
-          <div className="mb-10">
-            <h2 className="text-2xl font-semibold text-stone-900 tracking-tight">{getGreeting()}, {userName}</h2>
-            <p className="text-sm text-stone-500 mt-1">{getMsg()}</p>
-          </div>
+        <div className="w-full max-w-[760px] mx-auto py-10 px-6 md:px-16 pt-20 sm:pt-16">
 
-          {/* Stats Bar Flat */}
-          <div className="flex gap-4 mb-8 border-b border-stone-200 pb-4 overflow-x-auto scrollbar-hide">
-            {[
-              { l: 'Pending', v: stats.pending }, 
-              { l: 'Overdue', v: stats.overdue, c: stats.overdue > 0 ? 'text-rose-600' : '' },
-              { l: 'On Progress', v: stats.onProgress, c: 'text-emerald-600' },
-              { l: 'Done', v: stats.done }
-            ].map((s, i) => (
-              <div key={i} className={`flex items-baseline gap-1.5 flex-shrink-0 ${s.c || 'text-stone-600'}`}>
-                <span className="text-lg font-medium">{s.v}</span>
-                <span className="text-xs uppercase tracking-wide opacity-70">{s.l}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="mb-6 flex justify-between items-center">
-            <h3 className="text-lg font-medium text-stone-800 capitalize">{filter === 'Semua' ? 'Inbox' : filter}</h3>
+          <div className="mb-6 flex justify-between items-center border-b border-stone-200 pb-2">
+            <h3 className="text-2xl font-semibold text-stone-900 capitalize">{filter === 'Semua' ? 'Inbox' : filter}</h3>
           </div>
 
           {/* Todo List Mapping */}
           <div className="pb-24">
             {loading ? <p className="text-sm text-stone-400">Loading tasks...</p> : filteredTodos.length === 0 ? (
-              <div className="py-16 text-center border-t border-stone-100">
+              <div className="py-16 text-center border-stone-100">
                 <p className="text-sm text-stone-500 italic">"{activeQuote}"</p>
               </div>
             ) : (
-              <div className="border-t border-stone-200">
+              <div className="border-stone-200">
                 {filteredTodos.map(todo => (
                   <TodoItem 
                     key={todo.id} 
